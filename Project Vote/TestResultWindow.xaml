@@ -1,0 +1,77 @@
+﻿<Window x:Class="Project_Vote.TestResultWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Vote"
+        mc:Ignorable="d"
+        Title="Результаты теста" Height="600" Width="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#f0f0f0">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" x:Name="TestTitleText" Text="Название теста" 
+                   FontSize="24" FontWeight="Bold" Foreground="#0066cc" Margin="0,0,0,20"/>
+
+        <!-- Общие результаты -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                CornerRadius="5" Padding="20" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="Правильные ответы" FontSize="14" Foreground="#666" 
+                              HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="CorrectAnswersText" Text="7 из 10" FontSize="18" 
+                              FontWeight="Bold" Foreground="#333" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="Процент" FontSize="14" Foreground="#666" 
+                              HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="PercentageText" Text="70%" FontSize="18" 
+                              FontWeight="Bold" Foreground="#0066cc" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="Оценка" FontSize="14" Foreground="#666" 
+                              HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="GradeText" Text="Хорошо" FontSize="18" 
+                              FontWeight="Bold" Foreground="Green" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Подробные результаты -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                CornerRadius="5" Padding="20" Margin="0,0,0,20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Подробные результаты:" FontSize="16" 
+                              FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <StackPanel x:Name="DetailedResultsPanel">
+                        <!-- Сюда будут добавлены результаты программно -->
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Кнопка закрытия -->
+        <Button Grid.Row="3" Content="Закрыть" HorizontalAlignment="Right" Margin="0,0,0,0" 
+                Padding="20,10" Background="#0066cc" Foreground="White" BorderThickness="0" 
+                Click="CloseButton_Click"/>
+    </Grid>
+</Window> 
+
+
+

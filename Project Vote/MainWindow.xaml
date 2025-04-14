@@ -1,0 +1,251 @@
+﻿<Window x:Class="Project_Vote.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Vote"
+        mc:Ignorable="d"
+        Title="Project Vote" Height="750" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        SizeChanged="Window_SizeChanged"
+        PreviewMouseDown="Window_PreviewMouseDown"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Window.Resources>
+        <Storyboard x:Key="OpenSidePanelStoryboard">
+            <ThicknessAnimation Storyboard.TargetName="SidePanel" 
+                                Storyboard.TargetProperty="Margin" 
+                                From="-300,0,0,0" To="0,0,0,0" 
+                                Duration="0:0:0.3">
+                <ThicknessAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </ThicknessAnimation.EasingFunction>
+            </ThicknessAnimation>
+        </Storyboard>
+
+        <Storyboard x:Key="CloseSidePanelStoryboard">
+            <ThicknessAnimation Storyboard.TargetName="SidePanel" 
+                                Storyboard.TargetProperty="Margin" 
+                                From="0,0,0,0" To="-300,0,0,0" 
+                                Duration="0:0:0.3">
+                <ThicknessAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </ThicknessAnimation.EasingFunction>
+            </ThicknessAnimation>
+        </Storyboard>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Основное содержимое окна -->
+        <Grid>
+        <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+            <!-- Верхняя панель -->
+            <Border Grid.Row="0" Background="#0066cc" Panel.ZIndex="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                    <!-- Кнопка гамбургер-меню -->
+                    <Button x:Name="HamburgerButton" Grid.Column="0" Width="50" Height="50" Margin="5,0,0,0"
+                            Background="Transparent" BorderThickness="0" Click="HamburgerButton_Click" Panel.ZIndex="99999">
+                        <StackPanel VerticalAlignment="Center">
+                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
+                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
+                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
+                        </StackPanel>
+                            </Button>
+
+                    <!-- Название проекта -->
+                    <TextBlock Grid.Column="1" Text="Project Vote" Foreground="White" 
+                               FontSize="26" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,30,0"/>
+
+
+                    <!-- Панель профиля пользователя -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,10,0">
+                        <!-- Кнопки входа/регистрации для неаутентифицированных пользователей -->
+                        <Button x:Name="LoginButton" Content="Войти" Margin="5,0" 
+                                Click="Button_Click_2"
+                                Background="Transparent" Foreground="White" 
+                                BorderBrush="White" BorderThickness="1"
+                                Padding="18,10" FontSize="16" FontWeight="Medium"
+                                Cursor="Hand"/>
+                        <TextBlock x:Name="SeparatorText" Text="|" Foreground="White" FontSize="16" VerticalAlignment="Center" Margin="5,0"/>
+                        <Button x:Name="RegisterButton" Content="Регистрация" Margin="5,0" 
+                                Click="Button_Click_1"
+                                Background="White" Foreground="#0066cc" 
+                                BorderThickness="0" Padding="18,10" 
+                                FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+
+                        <!-- Кнопка профиля для аутентифицированных пользователей -->
+                        <Border BorderBrush="White" BorderThickness="0" Width="40" Height="40" CornerRadius="20" 
+                                Margin="10,0" MouseDown="ProfileBorder_MouseDown">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Изменить имя" Click="ChangeNameMenuItem_Click"/>
+                                <MenuItem Header="Изменить аватарку" Click="ChangeAvatarMenuItem_Click"/>
+                                <Separator/>
+                                    <MenuItem Header="Выйти" Click="LogoutMenuItem_Click"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                            <Border.Background>
+                                <ImageBrush x:Name="TopBarProfileImage" Stretch="UniformToFill"/>
+                            </Border.Background>
+                    </Border>
+                        <TextBlock x:Name="UserNameText" Text="Гость" Foreground="White" 
+                                   FontSize="16" VerticalAlignment="Center" Margin="5,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+            <!-- Основное содержимое приложения -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <!-- Боковая панель -->
+                    <Border x:Name="SidePanel" Width="300" Background="#f8f8f8" HorizontalAlignment="Left"
+                           BorderBrush="#ddd" BorderThickness="0,0,1,0" Margin="-300,0,0,0" Panel.ZIndex="2">
+                        <StackPanel Margin="10,20">
+                            <TextBlock Text="Меню" FontSize="24" FontWeight="Bold" Margin="15,20,0,20"/>
+                            <Button x:Name="YourQuestionsButtonMenu" Content="Ваши опросы" Click="YourQuestionsButton_Click"
+                                    Background="Transparent" Foreground="#333" BorderThickness="0"
+                                    HorizontalContentAlignment="Left" Padding="15,12"
+                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                            <Button Content="Создать опрос" Click="CreateVoteButton_Click"
+                                    Background="Transparent" Foreground="#333" BorderThickness="0"
+                                    HorizontalContentAlignment="Left" Padding="15,12"
+                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                            <Button Content="Шаблоны опросов" Click="TemplatesButton_Click"
+                                    Background="Transparent" Foreground="#333" BorderThickness="0"
+                                    HorizontalContentAlignment="Left" Padding="15,12"
+                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                            <Button Content="Настройки" 
+                                    Background="Transparent" Foreground="#333" BorderThickness="0"
+                                    HorizontalContentAlignment="Left" Padding="15,12"
+                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                            <Button x:Name="ClosePanelButton" Content="Закрыть" Margin="0,30,0,5" 
+                                    HorizontalAlignment="Center" Click="ClosePanelButton_Click"
+                                    Background="#0066cc" Foreground="White" BorderThickness="0"
+                                    Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                </StackPanel>
+                    </Border>
+
+                    <!-- Главный контент -->
+                    <Grid Margin="20">
+                <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                        <!-- Заголовок страницы -->
+                        <TextBlock Grid.Row="0" Text="Добро пожаловать в Project Vote!" 
+                                  FontSize="32" FontWeight="Bold" Margin="0,20,0,30"/>
+
+                        <!-- Основной контент -->
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Карточки с действиями -->
+                            <WrapPanel Grid.Row="0" Margin="0,0,0,30" HorizontalAlignment="Center">
+                                <!-- Карточка "Создать опрос" -->
+                                <Border Width="350" Height="220" Margin="15" Background="White" 
+                                       BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#ccc" BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <Grid Margin="25">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="Создать новый опрос" 
+                                                  FontSize="22" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" Text="Создайте собственный опрос, тест или голосование. Настройте его под свои нужды и поделитесь с другими." 
+                                                  TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
+                                        <Button Grid.Row="2" Content="Создать опрос" 
+                                               HorizontalAlignment="Left" Click="CreateVoteButton_Click"
+                                               Background="#0066cc" Foreground="White" BorderThickness="0"
+                                               Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                </Grid>
+                                </Border>
+
+                                <!-- Карточка "Ваши опросы" -->
+                                <Border Width="350" Height="220" Margin="15" Background="White" 
+                                       BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#ccc" BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <Grid Margin="25">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="Ваши опросы" 
+                                                   FontSize="22" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" Text="Просмотрите, отредактируйте или удалите опросы, которые вы создали ранее." 
+                                                   TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
+                                        <Button Grid.Row="2" Content="Посмотреть опросы" 
+                                                HorizontalAlignment="Left" Click="YourQuestionsButton_Click"
+                                                Background="#0066cc" Foreground="White" BorderThickness="0"
+                                                Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                    </Grid>
+                            </Border>
+
+                                <!-- Карточка "Шаблоны" -->
+                                <Border Width="350" Height="220" Margin="15" Background="White" 
+                                       BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#ccc" BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <Grid Margin="25">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="Использовать шаблон" 
+                                                  FontSize="22" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" Text="Выберите готовый шаблон опроса или теста из нашей коллекции. Сэкономьте время при создании опросов." 
+                                                  TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
+                                        <Button Grid.Row="2" Content="Выбрать шаблон" 
+                                               HorizontalAlignment="Left" Click="OpenTemplatesWindow_Click"
+                                               Background="#0066cc" Foreground="White" BorderThickness="0"
+                                               Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                    </Grid>
+                            </Border>
+                            </WrapPanel>
+
+                            <!-- Дополнительный контент -->
+                            <Border Grid.Row="1" Background="#f9f9f9" BorderBrush="#ddd" 
+                                   BorderThickness="1" CornerRadius="8" Padding="30">
+                                <StackPanel>
+                                    <TextBlock Text="Последние обновления" FontSize="22" FontWeight="Bold" Margin="0,0,0,20"/>
+                                    <TextBlock Text="• Добавлена возможность просмотра своих опросов" Margin="0,6" FontSize="15"/>
+                                    <TextBlock Text="• Улучшен интерфейс создания опросов" Margin="0,6" FontSize="15"/>
+                                    <TextBlock Text="• Добавлены шаблоны опросов" Margin="0,6" FontSize="15"/>
+                                    <TextBlock Text="• Исправлены ошибки в работе системы" Margin="0,6" FontSize="15"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+    
+        <!-- Canvas для визуальных эффектов (волны и пузырьки) -->
+        <Canvas x:Name="EffectCanvas" Panel.ZIndex="0" 
+                Background="Transparent"
+                IsHitTestVisible="False" Margin="-10,60,10,-60"/>
+    </Grid>
+</Window>

@@ -1,0 +1,69 @@
+﻿<Window x:Class="Project_Vote.TestPassingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Vote"
+        mc:Ignorable="d"
+        Title="Прохождение теста" Height="600" Width="800"
+        WindowStartupLocation="CenterOwner"
+        Background="#f0f0f0">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" x:Name="TestTitleText" Text="Название теста" 
+                   FontSize="24" FontWeight="Bold" Foreground="#0066cc" Margin="0,0,0,10"/>
+
+        <!-- Прогресс -->
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" x:Name="ProgressBar" Height="10" Maximum="100" Value="0"/>
+            <TextBlock Grid.Column="1" x:Name="ProgressText" Text="Вопрос 1 из 10" 
+                      Margin="10,0,0,0" VerticalAlignment="Center" Foreground="#666"/>
+        </Grid>
+
+        <!-- Контент вопроса -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                        CornerRadius="5" Padding="20" Margin="0,0,0,15">
+                    <TextBlock x:Name="QuestionText" Text="Текст вопроса..." FontSize="16" 
+                              TextWrapping="Wrap" Foreground="#333"/>
+                </Border>
+
+                <StackPanel x:Name="OptionsPanel" Margin="10,0,0,0">
+                    <!-- Варианты ответов будут добавлены программно -->
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Кнопки навигации -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="PrevButton" Content="Назад" Padding="20,10" Margin="0,0,10,0" 
+                    IsEnabled="False" Click="PrevButton_Click">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+            <Button x:Name="NextButton" Content="Следующий" Padding="20,10" Background="#0066cc" 
+                    Foreground="White" BorderThickness="0" Click="NextButton_Click">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window> 
