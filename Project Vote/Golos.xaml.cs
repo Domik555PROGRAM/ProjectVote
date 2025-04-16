@@ -631,7 +631,7 @@ namespace Project_Vote
                     MessageBox.Show("Опрос успешно обновлен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                 else
                     MessageBox.Show("Опрос успешно сохранен в базе данных!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                DialogResult = true;
+                
                 Close();
             }
         }

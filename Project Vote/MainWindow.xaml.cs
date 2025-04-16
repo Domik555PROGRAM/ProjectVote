@@ -168,7 +168,6 @@ namespace Project_Vote
                 // Добавляем в EffectCanvas с проверкой
                 EffectCanvas.Children.Add(leftFill);
                 EffectCanvas.Children.Add(rightFill);
-                int h;
                 // Устанавливаем позиции безопасно
                 SetElementPosition(leftFill, 0, 0);
 

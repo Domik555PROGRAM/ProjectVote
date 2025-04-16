@@ -25,21 +25,7 @@
                 
                 <!-- Описание опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Описание</TextBlock>
-                
-                <!-- Панель форматирования -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                    <Button x:Name="BoldButton" Click="BoldButton_Click" Padding="5,3" Margin="0,0,5,0">
-                        <TextBlock FontWeight="Bold">Ж</TextBlock>
-                    </Button>
-                    <Button x:Name="ItalicButton" Click="ItalicButton_Click" Padding="5,3" Margin="0,0,5,0">
-                        <TextBlock FontStyle="Italic">К</TextBlock>
-                    </Button>
-                    <Button x:Name="UnderlineButton" Click="UnderlineButton_Click" Padding="5,3" Margin="0,0,5,0">
-                        <TextBlock TextDecorations="Underline">Ч</TextBlock>
-                    </Button>
-                    <Button x:Name="OpenTemplatesWindow" Click="OpenTemplatesWindow_Click" Padding="5,3" Margin="0,0,5,0" Content="Шаблоны"/>
-                </StackPanel>
-                
+                 
                 <!-- Текстовый редактор -->
                 <RichTextBox x:Name="DescriptionRichTextBox"
                          AcceptsReturn="True"
