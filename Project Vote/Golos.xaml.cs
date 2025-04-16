@@ -586,11 +586,40 @@ namespace Project_Vote
 
             if (_currentPoll.PollType == "Тест с вопросами и вариантами ответов")
             {
-                MessageBox.Show("Сохранение тестов пока не реализовано в базе данных.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 if (_currentPoll.Options == null)
                     _currentPoll.Options = new List<string>();
                 else
                     _currentPoll.Options.Clear();
+                
+                if (_questions != null && _questions.Count > 0)
+                {
+                    foreach (var question in _questions)
+                    {
+                        if (string.IsNullOrWhiteSpace(question.QuestionText))
+                            continue;
+                            
+                        string questionData = "Q:" + question.QuestionText;
+                        
+                        if (question.Options != null && question.Options.Count > 0)
+                        {
+                            foreach (var option in question.Options)
+                            {
+                                if (string.IsNullOrWhiteSpace(option.Text))
+                                    continue;
+                                    
+                                questionData += $"|||O:{option.Text}:{(option.IsCorrect ? "1" : "0")}";
+                            }
+                        }
+                        
+                        _currentPoll.Options.Add(questionData);
+                    }
+                }
+                
+                if (!_currentPoll.Options.Any())
+                {
+                    MessageBox.Show("Нельзя сохранить тест без вопросов.", "Нет вопросов", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
             }
             else
             {
@@ -724,24 +753,80 @@ namespace Project_Vote
                                         break;
                                 }
 
-                                // Заполняем варианты ответов
-                                _pollOptions.Clear();
-                                if (!string.IsNullOrEmpty(options))
+                                if (pollType == "Тест с вопросами и вариантами ответов")
                                 {
-                                    string[] optionArray = options.Split(new[] { "|||" }, StringSplitOptions.None);
-                                    foreach (var option in optionArray)
+                                    // Очищаем существующие вопросы
+                                    _questions.Clear();
+                                    
+                                    if (!string.IsNullOrEmpty(options))
                                     {
-                                        if (!string.IsNullOrEmpty(option))
-                                            _pollOptions.Add(new PollOption { Text = option });
+                                        string[] questionsArray = options.Split(new[] { "|||" }, StringSplitOptions.RemoveEmptyEntries);
+                                        
+                                        Question currentQuestion = null;
+                                        
+                                        foreach (var item in questionsArray)
+                                        {
+                                            if (item.StartsWith("Q:"))
+                                            {
+                                                // Новый вопрос
+                                                currentQuestion = new Question { QuestionText = item.Substring(2) };
+                                                _questions.Add(currentQuestion);
+                                            }
+                                            else if (item.StartsWith("O:") && currentQuestion != null)
+                                            {
+                                                // Вариант ответа для текущего вопроса
+                                                string[] optionParts = item.Substring(2).Split(':');
+                                                if (optionParts.Length >= 2)
+                                                {
+                                                    bool isCorrect = optionParts[1] == "1";
+                                                    currentQuestion.Options.Add(new PollOption
+                                                    {
+                                                        Text = optionParts[0],
+                                                        IsCorrect = isCorrect
+                                                    });
+                                                }
+                                                else if (optionParts.Length == 1)
+                                                {
+                                                    currentQuestion.Options.Add(new PollOption
+                                                    {
+                                                        Text = optionParts[0],
+                                                        IsCorrect = false
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Если нет вопросов, добавляем пустой вопрос
+                                    if (_questions.Count == 0)
+                                    {
+                                        var newQuestion = new Question { QuestionText = "" };
+                                        newQuestion.Options.Add(new PollOption { Text = "Вариант 1" });
+                                        newQuestion.Options.Add(new PollOption { Text = "Вариант 2" });
+                                        _questions.Add(newQuestion);
                                     }
                                 }
-
-                                // Если список вариантов пуст, добавляем несколько пустых вариантов
-                                if (_pollOptions.Count == 0)
+                                else
                                 {
-                                    _pollOptions.Add(new PollOption { Text = "Вариант 1" });
-                                    _pollOptions.Add(new PollOption { Text = "Вариант 2" });
-                                    _pollOptions.Add(new PollOption { Text = "Вариант 3" });
+                                    // Для обычных опросов загружаем варианты
+                                    _pollOptions.Clear();
+                                    if (!string.IsNullOrEmpty(options))
+                                    {
+                                        string[] optionArray = options.Split(new[] { "|||" }, StringSplitOptions.None);
+                                        foreach (var option in optionArray)
+                                        {
+                                            if (!string.IsNullOrEmpty(option))
+                                                _pollOptions.Add(new PollOption { Text = option });
+                                        }
+                                    }
+
+                                    // Если список вариантов пуст, добавляем несколько пустых вариантов
+                                    if (_pollOptions.Count == 0)
+                                    {
+                                        _pollOptions.Add(new PollOption { Text = "Вариант 1" });
+                                        _pollOptions.Add(new PollOption { Text = "Вариант 2" });
+                                        _pollOptions.Add(new PollOption { Text = "Вариант 3" });
+                                    }
                                 }
 
                                 // Обновляем заголовок окна
