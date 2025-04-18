@@ -13,6 +13,204 @@
         TextOptions.TextRenderingMode="ClearType">
 
     <Window.Resources>
+        <!-- Ресурсы для градиента кнопок -->
+        <LinearGradientBrush x:Key="ButtonGradientBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#4A90E2" Offset="0.0"/>
+            <GradientStop Color="#357ABD" Offset="1.0"/>
+        </LinearGradientBrush>
+        
+        <!-- Стиль для стандартных кнопок -->
+        <Style x:Key="GradientButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+            
+        <!-- Стиль для кнопки меню в боковой панели -->
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="15,12"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter 
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+            
+        <!-- Стиль для прозрачных кнопок с белой рамкой -->
+        <Style x:Key="TransparentBorderButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter 
+                                          HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#22FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#44FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+            
+        <!-- Стиль для белых кнопок с цветным текстом -->
+        <Style x:Key="WhiteButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#0066cc"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter 
+                                          HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E0E0E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Стиль для гамбургер-кнопки -->
+        <Style x:Key="HamburgerButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="50"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Grid>
+                                <Rectangle x:Name="Line1" Fill="White" Height="2" Width="24" Margin="0,-8,0,0">
+                                    <Rectangle.RenderTransform>
+                                        <TransformGroup>
+                                            <TranslateTransform X="0" Y="0"/>
+                                            <RotateTransform Angle="0"/>
+                                        </TransformGroup>
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                                <Rectangle x:Name="Line2" Fill="White" Height="2" Width="24">
+                                    <Rectangle.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            <TranslateTransform X="0" Y="0"/>
+                                        </TransformGroup>
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                                <Rectangle x:Name="Line3" Fill="White" Height="2" Width="24" Margin="0,8,0,0">
+                                    <Rectangle.RenderTransform>
+                                        <TransformGroup>
+                                            <TranslateTransform X="0" Y="0"/>
+                                            <RotateTransform Angle="0"/>
+                                        </TransformGroup>
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#22FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#44FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
         <Storyboard x:Key="OpenSidePanelStoryboard">
             <ThicknessAnimation Storyboard.TargetName="SidePanel" 
                                 Storyboard.TargetProperty="Margin" 
@@ -54,14 +252,9 @@
                 </Grid.ColumnDefinitions>
 
                     <!-- Кнопка гамбургер-меню -->
-                    <Button x:Name="HamburgerButton" Grid.Column="0" Width="50" Height="50" Margin="5,0,0,0"
-                            Background="Transparent" BorderThickness="0" Click="HamburgerButton_Click" Panel.ZIndex="99999">
-                        <StackPanel VerticalAlignment="Center">
-                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
-                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
-                            <Rectangle Fill="White" Height="3" Width="25" Margin="0,3"/>
-                        </StackPanel>
-                            </Button>
+                    <Button x:Name="HamburgerButton" Grid.Column="0" Margin="5,0,0,0"
+                            Style="{StaticResource HamburgerButtonStyle}" 
+                            Click="HamburgerButton_Click" Panel.ZIndex="99999"/>
 
                     <!-- Название проекта -->
                     <TextBlock Grid.Column="1" Text="Project Vote" Foreground="White" 
@@ -73,16 +266,11 @@
                         <!-- Кнопки входа/регистрации для неаутентифицированных пользователей -->
                         <Button x:Name="LoginButton" Content="Войти" Margin="5,0" 
                                 Click="Button_Click_2"
-                                Background="Transparent" Foreground="White" 
-                                BorderBrush="White" BorderThickness="1"
-                                Padding="18,10" FontSize="16" FontWeight="Medium"
-                                Cursor="Hand"/>
+                                Style="{StaticResource TransparentBorderButtonStyle}"/>
                         <TextBlock x:Name="SeparatorText" Text="|" Foreground="White" FontSize="16" VerticalAlignment="Center" Margin="5,0"/>
                         <Button x:Name="RegisterButton" Content="Регистрация" Margin="5,0" 
                                 Click="Button_Click_1"
-                                Background="White" Foreground="#0066cc" 
-                                BorderThickness="0" Padding="18,10" 
-                                FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                Style="{StaticResource WhiteButtonStyle}"/>
 
                         <!-- Кнопка профиля для аутентифицированных пользователей -->
                         <Border BorderBrush="White" BorderThickness="0" Width="40" Height="40" CornerRadius="20" 
@@ -114,25 +302,16 @@
                         <StackPanel Margin="10,20">
                             <TextBlock Text="Меню" FontSize="24" FontWeight="Bold" Margin="15,20,0,20"/>
                             <Button x:Name="YourQuestionsButtonMenu" Content="Ваши опросы" Click="YourQuestionsButton_Click"
-                                    Background="Transparent" Foreground="#333" BorderThickness="0"
-                                    HorizontalContentAlignment="Left" Padding="15,12"
-                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                                    Style="{StaticResource MenuButtonStyle}"/>
                             <Button Content="Создать опрос" Click="CreateVoteButton_Click"
-                                    Background="Transparent" Foreground="#333" BorderThickness="0"
-                                    HorizontalContentAlignment="Left" Padding="15,12"
-                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                                    Style="{StaticResource MenuButtonStyle}"/>
                             <Button Content="Шаблоны опросов" Click="TemplatesButton_Click"
-                                    Background="Transparent" Foreground="#333" BorderThickness="0"
-                                    HorizontalContentAlignment="Left" Padding="15,12"
-                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                                    Style="{StaticResource MenuButtonStyle}"/>
                             <Button Content="Настройки" 
-                                    Background="Transparent" Foreground="#333" BorderThickness="0"
-                                    HorizontalContentAlignment="Left" Padding="15,12"
-                                    FontSize="18" FontWeight="Medium" Cursor="Hand"/>
+                                    Style="{StaticResource MenuButtonStyle}"/>
                             <Button x:Name="ClosePanelButton" Content="Закрыть" Margin="0,30,0,5" 
                                     HorizontalAlignment="Center" Click="ClosePanelButton_Click"
-                                    Background="#0066cc" Foreground="White" BorderThickness="0"
-                                    Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                    Style="{StaticResource GradientButtonStyle}"/>
                 </StackPanel>
                     </Border>
 
@@ -174,8 +353,7 @@
                                                   TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
                                         <Button Grid.Row="2" Content="Создать опрос" 
                                                HorizontalAlignment="Left" Click="CreateVoteButton_Click"
-                                               Background="#0066cc" Foreground="White" BorderThickness="0"
-                                               Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                               Style="{StaticResource GradientButtonStyle}"/>
                 </Grid>
                                 </Border>
 
@@ -197,8 +375,7 @@
                                                    TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
                                         <Button Grid.Row="2" Content="Посмотреть опросы" 
                                                 HorizontalAlignment="Left" Click="YourQuestionsButton_Click"
-                                                Background="#0066cc" Foreground="White" BorderThickness="0"
-                                                Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                                Style="{StaticResource GradientButtonStyle}"/>
                                     </Grid>
                             </Border>
 
@@ -220,8 +397,7 @@
                                                   TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
                                         <Button Grid.Row="2" Content="Выбрать шаблон" 
                                                HorizontalAlignment="Left" Click="OpenTemplatesWindow_Click"
-                                               Background="#0066cc" Foreground="White" BorderThickness="0"
-                                               Padding="18,10" FontSize="16" FontWeight="Medium" Cursor="Hand"/>
+                                               Style="{StaticResource GradientButtonStyle}"/>
                                     </Grid>
                             </Border>
                             </WrapPanel>
@@ -237,7 +413,7 @@
                                     <TextBlock Text="• Исправлены ошибки в работе системы" Margin="0,6" FontSize="15"/>
                                 </StackPanel>
                             </Border>
-                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
         </ScrollViewer>

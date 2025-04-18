@@ -60,15 +60,15 @@ namespace Project_Vote
         }
         // Коллекция вариантов ответа
         private ObservableCollection<PollOption> _pollOptions;
-
+        
         // Класс для хранения данных опроса
         private Poll _currentPoll;
-
+        
         // Переменные для отслеживания состояния форматирования
         private bool _isBoldActive = false;
         private bool _isItalicActive = false;
         private bool _isUnderlineActive = false;
-
+        
 
         public class Question
         {
@@ -93,7 +93,7 @@ namespace Project_Vote
             InitializeRichTextBox();
             QuestionsItemsControl.ItemsSource = _questions;
         }
-
+        
         private void InitializeRichTextBox()
         {
             Paragraph paragraph = new Paragraph();
@@ -112,7 +112,7 @@ namespace Project_Vote
                 e.CancelCommand();
             }
         }
-
+        
 
         private void InsertFormattedText(TextPointer position, string text)
         {
@@ -127,8 +127,8 @@ namespace Project_Vote
             TextPointer newPosition = run.ContentEnd;
             DescriptionRichTextBox.Selection.Select(newPosition, newPosition);
         }
-
-
+       
+        
         private void BoldButton_Click(object sender, RoutedEventArgs e)
         {
             _isBoldActive = !_isBoldActive;
@@ -144,7 +144,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-
+        
         private void ItalicButton_Click(object sender, RoutedEventArgs e)
         {
             _isItalicActive = !_isItalicActive;
@@ -153,7 +153,7 @@ namespace Project_Vote
                 TextRange selection = new TextRange(
                     DescriptionRichTextBox.Selection.Start,
                     DescriptionRichTextBox.Selection.End);
-
+                
                 if (_isItalicActive)
                     selection.ApplyPropertyValue(TextElement.FontStyleProperty, FontStyles.Italic);
                 else
@@ -161,7 +161,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-
+        
         private void UnderlineButton_Click(object sender, RoutedEventArgs e)
         {
             _isUnderlineActive = !_isUnderlineActive;
@@ -170,7 +170,7 @@ namespace Project_Vote
                 TextRange selection = new TextRange(
                     DescriptionRichTextBox.Selection.Start,
                     DescriptionRichTextBox.Selection.End);
-
+                
                 if (_isUnderlineActive)
                     selection.ApplyPropertyValue(Inline.TextDecorationsProperty, TextDecorations.Underline);
                 else
@@ -178,7 +178,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-
+        
 
         private void DescriptionRichTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -237,7 +237,7 @@ namespace Project_Vote
 
             return null;
         }
-
+        
 
         private bool IsModifierKey(Key key)
         {
@@ -247,7 +247,7 @@ namespace Project_Vote
                    key == Key.LWin || key == Key.RWin ||
                    key == Key.CapsLock;
         }
-
+        
 
         private bool IsControlKey(Key key)
         {
@@ -259,11 +259,11 @@ namespace Project_Vote
                    key == Key.Insert || key == Key.Escape ||
                    key == Key.Enter;
         }
-
+        
 
         private void DescriptionRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_currentPoll == null)
+            if (_currentPoll == null) 
             {
                 _currentPoll = new Poll();
                 DataContext = _currentPoll;
@@ -275,11 +275,11 @@ namespace Project_Vote
 
             _currentPoll.Description = textRange.Text?.Trim() ?? string.Empty;
         }
-
+        
         private void TitleTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
 
-            if (_currentPoll == null)
+            if (_currentPoll == null) 
             {
                 _currentPoll = new Poll();
                 DataContext = _currentPoll;
@@ -288,10 +288,10 @@ namespace Project_Vote
             if (TitleTextBox == null) return;
 
             int length = TitleTextBox.Text?.Length ?? 0;
-
+            
             if (TitleCharCountText != null)
                 TitleCharCountText.Text = $"{length}/200";
-
+            
             if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
             {
                 if (TitleErrorText != null)
@@ -301,11 +301,11 @@ namespace Project_Vote
             {
                 if (TitleErrorText != null)
                     TitleErrorText.Visibility = Visibility.Collapsed;
-
+                
                 _currentPoll.Title = TitleTextBox.Text;
             }
         }
-
+        
         private void PollTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
@@ -323,19 +323,19 @@ namespace Project_Vote
                 QuestionsPanel.Visibility = Visibility.Collapsed;
             }
         }
-
+        
         private void AddQuestion_Click(object sender, RoutedEventArgs e)
         {
             _questions.Add(new Question());
         }
-
+        
         private void AddOption_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             var question = button.DataContext as Question;
             question?.Options.Add(new PollOption());
         }
-
+        
         private void RemoveOption_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -343,7 +343,7 @@ namespace Project_Vote
             var question = _questions.FirstOrDefault(q => q.Options.Contains(option));
             question?.Options.Remove(option);
         }
-
+        
         private bool CreatePollTableIfNotExists(MySqlConnection connection)
         {
             try
@@ -414,10 +414,21 @@ namespace Project_Vote
                     conn.Open();
 
                     string checkQuery = "SELECT COUNT(*) FROM polls WHERE title = @title";
+                    // Если мы редактируем существующий опрос, исключаем его из проверки
+                    if (_isEditingMode && _editingPollId > 0)
+                    {
+                        checkQuery += " AND id != @id";
+                    }
+                    
                     using (MySqlCommand cmd = new MySqlCommand(checkQuery, conn))
                     {
-
                         cmd.Parameters.AddWithValue("@title", title);
+                        
+                        // Добавляем параметр ID только если мы в режиме редактирования
+                        if (_isEditingMode && _editingPollId > 0)
+                        {
+                            cmd.Parameters.AddWithValue("@id", _editingPollId);
+                        }
 
                         long count = (long)cmd.ExecuteScalar();
 
@@ -586,10 +597,10 @@ namespace Project_Vote
 
             if (_currentPoll.PollType == "Тест с вопросами и вариантами ответов")
             {
-                if (_currentPoll.Options == null)
-                    _currentPoll.Options = new List<string>();
-                else
-                    _currentPoll.Options.Clear();
+                 if (_currentPoll.Options == null)
+                     _currentPoll.Options = new List<string>();
+                 else
+                     _currentPoll.Options.Clear();
                 
                 if (_questions != null && _questions.Count > 0)
                 {
@@ -659,12 +670,12 @@ namespace Project_Vote
                 if (_isEditingMode)
                     MessageBox.Show("Опрос успешно обновлен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                 else
-                    MessageBox.Show("Опрос успешно сохранен в базе данных!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Опрос успешно сохранен в базе данных!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 Close();
             }
         }
-
+        
         private void PreviewButton_Click(object sender, RoutedEventArgs e)
         {
             string title = TitleTextBox.Text;
@@ -698,7 +709,7 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при открытии предпросмотра: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+        
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Вы уверены, что хотите отменить создание опроса? Все несохраненные данные будут утеряны.", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -872,9 +883,9 @@ namespace Project_Vote
             public string Description { get; set; }
             public string Language { get; set; }
             public string PollType { get; set; }
-            public List<string> Options
-            {
-                get { return _options; }
+            public List<string> Options 
+            { 
+                get { return _options; } 
                 set { _options = value ?? new List<string>(); }
             }
             public DateTime CreatedAt { get; set; }

@@ -166,5 +166,41 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при обновлении списка опросов: {ex.Message}", "Ошибка базы данных", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void RunPoll_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.Tag == null) return;
+            
+            int pollId = (int)button.Tag;
+            var pollToRun = _userPolls.Find(p => p.Id == pollId);
+            
+            if (pollToRun == null)
+            {
+                MessageBox.Show("Не удалось найти выбранный опрос.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            
+            // Проверяем тип опроса/теста
+            if (pollToRun.PollType == "Тест с вопросами и вариантами ответов")
+            {
+                try
+                {
+                    var testWindow = new TestPassingWindow(pollToRun.Id, pollToRun.Title);
+                    testWindow.Owner = this;
+                    testWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии окна прохождения теста: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                // Для обычных опросов (одиночный или множественный выбор)
+                MessageBox.Show($"Опрос '{pollToRun.Title}' не является тестом с вопросами. Для обычных опросов функция прохождения находится в разработке.", 
+                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
 }

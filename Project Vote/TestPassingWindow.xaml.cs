@@ -31,6 +31,7 @@ namespace Project_Vote
         private string _testTitle;
         private List<TestQuestion> _questions = new List<TestQuestion>();
         private int _currentQuestionIndex = 0;
+        private string _pollType;
 
         public TestPassingWindow(int testId, string testTitle)
         {
@@ -51,53 +52,98 @@ namespace Project_Vote
                 {
                     conn.Open();
 
-                    // Загружаем вопросы
-                    string questionsQuery = "SELECT id, question_text FROM questions WHERE poll_id = @pollId ORDER BY question_order";
-                    using (MySqlCommand cmd = new MySqlCommand(questionsQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@pollId", _testId);
+                    // Сначала проверим, есть ли данные о тесте в основной таблице polls
+                    string pollQuery = "SELECT options, poll_type FROM polls WHERE id = @pollId";
+                    string optionsData = null;
+                    string pollType = null;
 
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                    using (MySqlCommand cmdPoll = new MySqlCommand(pollQuery, conn))
+                    {
+                        cmdPoll.Parameters.AddWithValue("@pollId", _testId);
+                        using (MySqlDataReader pollReader = cmdPoll.ExecuteReader())
                         {
-                            while (reader.Read())
+                            if (pollReader.Read())
                             {
-                                _questions.Add(new TestQuestion
+                                if (!pollReader.IsDBNull(pollReader.GetOrdinal("options")))
                                 {
-                                    Id = reader.GetInt32("id"),
-                                    Text = reader.GetString("question_text")
-                                });
+                                    optionsData = pollReader.GetString("options");
+                                }
+                                
+                                if (!pollReader.IsDBNull(pollReader.GetOrdinal("poll_type")))
+                                {
+                                    pollType = pollReader.GetString("poll_type");
+                                }
                             }
                         }
                     }
 
-                    // Для каждого вопроса загружаем варианты ответов
-                    foreach (var question in _questions)
-                    {
-                        string optionsQuery = @"
-                            SELECT id, option_text, is_correct 
-                            FROM question_options 
-                            WHERE question_id = @questionId 
-                            ORDER BY option_order";
+                    // Запомним тип опроса/теста
+                    _pollType = pollType;
 
-                        using (MySqlCommand cmd = new MySqlCommand(optionsQuery, conn))
+                    // Если у нас есть данные в поле options и это тест с вопросами, распарсим его
+                    if (!string.IsNullOrEmpty(optionsData) && pollType == "Тест с вопросами и вариантами ответов")
+                    {
+                        ParseOptionsField(optionsData);
+                    }
+                    else
+                    {
+                        // Традиционный метод загрузки из таблицы questions
+                        // Загружаем вопросы
+                        string questionsQuery = "SELECT id, question_text FROM questions WHERE poll_id = @pollId ORDER BY question_order";
+                        using (MySqlCommand cmd = new MySqlCommand(questionsQuery, conn))
                         {
-                            cmd.Parameters.AddWithValue("@questionId", question.Id);
+                            cmd.Parameters.AddWithValue("@pollId", _testId);
 
                             using (MySqlDataReader reader = cmd.ExecuteReader())
                             {
                                 while (reader.Read())
                                 {
-                                    question.Options.Add(new TestOption
+                                    _questions.Add(new TestQuestion
                                     {
                                         Id = reader.GetInt32("id"),
-                                        Text = reader.GetString("option_text"),
-                                        IsCorrect = reader.GetBoolean("is_correct"),
-                                        IsSelected = false
+                                        Text = reader.GetString("question_text")
                                     });
                                 }
                             }
                         }
+
+                        // Для каждого вопроса загружаем варианты ответов
+                        foreach (var question in _questions)
+                        {
+                            string optionsQuery = @"
+                                SELECT id, option_text, is_correct 
+                                FROM question_options 
+                                WHERE question_id = @questionId 
+                                ORDER BY option_order";
+
+                            using (MySqlCommand cmd = new MySqlCommand(optionsQuery, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@questionId", question.Id);
+
+                                using (MySqlDataReader reader = cmd.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        question.Options.Add(new TestOption
+                                        {
+                                            Id = reader.GetInt32("id"),
+                                            Text = reader.GetString("option_text"),
+                                            IsCorrect = reader.GetBoolean("is_correct"),
+                                            IsSelected = false
+                                        });
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
+
+                // Проверим, есть ли у нас вопросы для теста
+                if (_questions.Count == 0)
+                {
+                    MessageBox.Show("Тест не содержит вопросов.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    this.Close();
+                    return;
                 }
 
                 // Обновляем индикатор прогресса
@@ -110,6 +156,56 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при загрузке вопросов: {ex.Message}",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 this.Close();
+            }
+        }
+
+        private void ParseOptionsField(string optionsData)
+        {
+            // Формат данных - вопросы и ответы разделены |||
+            string[] parts = optionsData.Split(new[] { "|||" }, StringSplitOptions.RemoveEmptyEntries);
+            
+            int questionId = 1;
+            TestQuestion currentQuestion = null;
+            
+            foreach (string part in parts)
+            {
+                if (part.StartsWith("Q:"))
+                {
+                    // Это новый вопрос
+                    string questionText = part.Substring(2).Trim();
+                    currentQuestion = new TestQuestion
+                    {
+                        Id = questionId++,
+                        Text = questionText,
+                        Options = new List<TestOption>()
+                    };
+                    _questions.Add(currentQuestion);
+                }
+                else if (part.StartsWith("O:") && currentQuestion != null)
+                {
+                    // Это вариант ответа для текущего вопроса
+                    string optionText = part.Substring(2).Trim();
+                    bool isCorrect = false;
+                    
+                    // Проверяем, содержит ли ответ информацию о правильности
+                    if (optionText.Contains(":"))
+                    {
+                        string[] optionParts = optionText.Split(':');
+                        if (optionParts.Length >= 2)
+                        {
+                            optionText = optionParts[0].Trim();
+                            isCorrect = optionParts[1].Trim() == "1";
+                        }
+                    }
+                    
+                    currentQuestion.Options.Add(new TestOption
+                    {
+                        Id = currentQuestion.Options.Count + 1,
+                        Text = optionText,
+                        IsCorrect = isCorrect,
+                        IsSelected = false
+                    });
+                }
             }
         }
 
@@ -128,39 +224,91 @@ namespace Project_Vote
             // Очищаем панель вариантов ответов
             OptionsPanel.Children.Clear();
 
+            // Определяем, нужно ли использовать чекбоксы для множественного выбора
+            bool useCheckboxes = _pollType != null && (_pollType.Contains("Множественный выбор") || 
+                                                       currentQuestion.Options.Count(o => o.IsCorrect) > 1);
+
             // Создаем варианты ответов
             foreach (var option in currentQuestion.Options)
             {
-                RadioButton radioButton = new RadioButton
+                if (useCheckboxes)
                 {
-                    Content = option.Text,
-                    Margin = new Thickness(0, 5, 0, 5),
-                    Tag = option.Id,
-                    IsChecked = option.IsSelected
-                };
-
-                radioButton.Checked += (s, e) =>
-                {
-                    // Сохраняем выбор пользователя
-                    var selected = s as RadioButton;
-                    if (selected?.Tag != null)
+                    // Используем CheckBox для множественного выбора
+                    CheckBox checkBox = new CheckBox
                     {
-                        int optionId = (int)selected.Tag;
-                        option.IsSelected = true;
+                        Content = option.Text,
+                        Margin = new Thickness(0, 5, 0, 5),
+                        Tag = option.Id,
+                        IsChecked = option.IsSelected
+                    };
 
-                        // Сбрасываем выбор для других опций
-                        foreach (var otherOption in currentQuestion.Options.Where(o => o.Id != optionId))
+                    checkBox.Checked += (s, e) =>
+                    {
+                        // Сохраняем выбор пользователя
+                        var selected = s as CheckBox;
+                        if (selected?.Tag != null && selected.IsChecked == true)
                         {
-                            otherOption.IsSelected = false;
+                            int optionId = (int)selected.Tag;
+                            option.IsSelected = true;
+
+                            // Добавляем ID в список выбранных, если его там еще нет
+                            if (!currentQuestion.SelectedOptionIds.Contains(optionId))
+                            {
+                                currentQuestion.SelectedOptionIds.Add(optionId);
+                            }
                         }
+                    };
 
-                        // Обновляем список выбранных ID
-                        currentQuestion.SelectedOptionIds.Clear();
-                        currentQuestion.SelectedOptionIds.Add(optionId);
-                    }
-                };
+                    checkBox.Unchecked += (s, e) =>
+                    {
+                        // Обрабатываем снятие выбора
+                        var selected = s as CheckBox;
+                        if (selected?.Tag != null)
+                        {
+                            int optionId = (int)selected.Tag;
+                            option.IsSelected = false;
 
-                OptionsPanel.Children.Add(radioButton);
+                            // Удаляем ID из списка выбранных
+                            currentQuestion.SelectedOptionIds.Remove(optionId);
+                        }
+                    };
+
+                    OptionsPanel.Children.Add(checkBox);
+                }
+                else
+                {
+                    // Используем RadioButton для одиночного выбора
+                    RadioButton radioButton = new RadioButton
+                    {
+                        Content = option.Text,
+                        Margin = new Thickness(0, 5, 0, 5),
+                        Tag = option.Id,
+                        IsChecked = option.IsSelected
+                    };
+
+                    radioButton.Checked += (s, e) =>
+                    {
+                        // Сохраняем выбор пользователя
+                        var selected = s as RadioButton;
+                        if (selected?.Tag != null)
+                        {
+                            int optionId = (int)selected.Tag;
+                            option.IsSelected = true;
+
+                            // Сбрасываем выбор для других опций
+                            foreach (var otherOption in currentQuestion.Options.Where(o => o.Id != optionId))
+                            {
+                                otherOption.IsSelected = false;
+                            }
+
+                            // Обновляем список выбранных ID
+                            currentQuestion.SelectedOptionIds.Clear();
+                            currentQuestion.SelectedOptionIds.Add(optionId);
+                        }
+                    };
+
+                    OptionsPanel.Children.Add(radioButton);
+                }
             }
 
             // Обновляем индикатор прогресса

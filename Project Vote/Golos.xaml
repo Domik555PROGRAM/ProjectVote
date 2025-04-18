@@ -7,36 +7,103 @@
         mc:Ignorable="d"
         Title="Создание опроса" Height="800" Width="675" MinWidth="675" MinHeight="800"
         WindowStartupLocation="CenterScreen">
+    <!-- Ресурсы для градиента кнопок -->
+    <Window.Resources>
+        <LinearGradientBrush x:Key="ButtonGradientBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#4A90E2" Offset="0.0"/>
+            <GradientStop Color="#357ABD" Offset="1.0"/>
+        </LinearGradientBrush>
+        <!-- Стиль для кнопок -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Стиль для одиночного выбора (RadioButton) в виде кнопки -->
+        <Style TargetType="RadioButton">
+            <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2D6EB8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="50,20,50,40">
                 <TextBlock FontSize="24" FontWeight="Bold" Margin="0,20,0,20" HorizontalAlignment="Center">Создание опроса/теста</TextBlock>
-                
                 <!-- Название опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,20,0,5">Название опроса/теста</TextBlock>
                 <TextBox x:Name="TitleTextBox" MaxLength="200" Margin="0,0,0,0" Padding="8,5" FontSize="14" 
                          BorderBrush="#ccc" BorderThickness="1" TextChanged="TitleTextBox_TextChanged"/>
-                
                 <Grid Margin="0,0,0,15">
                     <TextBlock x:Name="TitleErrorText" Text="Пожалуйста, введите название опроса" Foreground="Red" 
                                Visibility="Collapsed" HorizontalAlignment="Left"/>
                     <TextBlock x:Name="TitleCharCountText" Text="0/200" Foreground="#666" HorizontalAlignment="Right"/>
                 </Grid>
-                
                 <!-- Описание опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Описание</TextBlock>
-                 
-                <!-- Текстовый редактор -->
                 <RichTextBox x:Name="DescriptionRichTextBox"
-                         AcceptsReturn="True"
-                         MinHeight="200"
-                         Margin="0,0,0,15"
-                         Padding="8,5"
-                         FontSize="14"
-                         BorderBrush="#ccc"
-                         BorderThickness="1"
-                         TextChanged="DescriptionRichTextBox_TextChanged"/>
-                
+                             AcceptsReturn="True"
+                             MinHeight="200"
+                             Margin="0,0,0,15"
+                             Padding="8,5"
+                             FontSize="14"
+                             BorderBrush="#ccc"
+                             BorderThickness="1"
+                             TextChanged="DescriptionRichTextBox_TextChanged"/>
                 <!-- Тип опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Тип опроса/теста</TextBlock>
                 <ComboBox x:Name="PollTypeComboBox" SelectedIndex="0" Margin="0,0,0,15" Padding="8,5" FontSize="14" 
@@ -45,7 +112,6 @@
                     <ComboBoxItem>Множественный выбор (флажки)</ComboBoxItem>
                     <ComboBoxItem>Тест с вопросами и вариантами ответов</ComboBoxItem>
                 </ComboBox>
-                
                 <!-- Варианты для обычного опроса -->
                 <StackPanel>
                     <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Варианты ответа</TextBlock>
@@ -58,18 +124,16 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
-                                    <Button Grid.Column="1" Margin="5,0,0,0" Content="X" Tag="{Binding}" Click="RemoveOption_Click"/>
+                                    <Button Grid.Column="1" Content="X" Tag="{Binding}" Click="RemoveOption_Click"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <Button Content="Добавить вариант" Margin="0,10,0,20" Padding="10,5" HorizontalAlignment="Left"/>
+                    <Button Content="Добавить вариант" HorizontalAlignment="Left"/>
                 </StackPanel>
-                
                 <!-- Панель для теста с вопросами -->
                 <StackPanel x:Name="QuestionsPanel" Visibility="Collapsed">
                     <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Вопросы</TextBlock>
-                    
                     <ItemsControl x:Name="QuestionsItemsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -78,7 +142,6 @@
                                         <TextBlock Text="Вопрос:" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                         <TextBox Text="{Binding QuestionText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" 
                                                  Margin="0,0,0,10" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
-                                        
                                         <TextBlock Text="Варианты ответов:" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                         <ItemsControl ItemsSource="{Binding Options}">
                                             <ItemsControl.ItemTemplate>
@@ -92,28 +155,24 @@
                                                         <CheckBox IsChecked="{Binding IsCorrect}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                         <TextBox Grid.Column="1" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" 
                                                                  Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
-                                                        <Button Grid.Column="2" Margin="5,0,0,0" Content="X" Tag="{Binding}" Click="RemoveOption_Click"/>
+                                                        <Button Grid.Column="2" Content="X" Tag="{Binding}" Click="RemoveOption_Click"/>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                        
-                                        <Button Content="Добавить вариант" Margin="0,10,0,0" Padding="10,5" HorizontalAlignment="Left" 
-                                                Click="AddOption_Click"/>
+                                        <Button Content="Добавить вариант" HorizontalAlignment="Left" Click="AddOption_Click"/>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    
-                    <Button Content="Добавить вопрос" Margin="0,10,0,20" Padding="10,5" HorizontalAlignment="Left" Click="AddQuestion_Click"/>
+                    <Button Content="Добавить вопрос" HorizontalAlignment="Left" Click="AddQuestion_Click"/>
                 </StackPanel>
-                
                 <!-- Кнопки внизу -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                    <Button x:Name="SaveButton" Content="Сохранить" Width="120" Padding="0,8" Margin="0,0,15,0" Click="SaveButton_Click"/>
-                    <Button x:Name="PreviewButton" Content="Предпросмотр" Width="120" Padding="0,8" Margin="0,0,15,0" Click="PreviewButton_Click"/>
-                    <Button x:Name="CancelButton" Content="Отмена" Width="120" Padding="0,8" Click="CancelButton_Click"/>
+                    <Button x:Name="SaveButton" Content="Сохранить" Width="120" Click="SaveButton_Click"/>
+                    <Button x:Name="PreviewButton" Content="Предпросмотр" Width="120" Click="PreviewButton_Click"/>
+                    <Button x:Name="CancelButton" Content="Отмена" Width="120" Click="CancelButton_Click"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

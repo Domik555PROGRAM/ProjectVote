@@ -28,6 +28,20 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="Изменить" Margin="2" Padding="10,5" Click="EditPoll_Click" Tag="{Binding Id}"/>
+                                    <Button Content="Пройти тест" Margin="2" Padding="10,5" Click="RunPoll_Click" Tag="{Binding Id}">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Background" Value="#e6f2ff"/>
+                                                <Setter Property="BorderBrush" Value="#99ccff"/>
+                                                <Setter Property="Foreground" Value="#0066cc"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#cce6ff"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
                                     <Button Content="Удалить" Margin="2" Padding="10,5" Click="DeletePoll_Click" Tag="{Binding Id}">
                                         <Button.Style>
                                             <Style TargetType="Button">
