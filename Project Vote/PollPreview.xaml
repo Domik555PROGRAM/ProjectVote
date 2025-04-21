@@ -9,6 +9,9 @@
         WindowStartupLocation="CenterOwner"
         FontFamily="Segoe UI"
         Background="#f8f9fa">
+    <Window.Resources>
+        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Заголовок -->
@@ -29,7 +32,7 @@
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0">
             <ItemsControl x:Name="PollItemsControl">
                 <ItemsControl.Resources>
-                    <!-- Конвертер -->
+                    <!-- Конвертеры -->
                     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
                     <!-- Стиль для текста варианта ответа -->
@@ -72,17 +75,46 @@
                         <Border Background="White" CornerRadius="8" BorderBrush="#dadce0" BorderThickness="1" Margin="0,15,0,0" Padding="24">
                             <StackPanel>
                                 <TextBlock Text="{Binding QuestionText}" FontSize="16" FontWeight="Normal" Foreground="#202124" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                                
+                                <!-- Изображение вопроса, если есть -->
+                                <Border BorderBrush="#dadce0" BorderThickness="1" CornerRadius="4" 
+                                        Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Margin="0,0,0,15" MaxHeight="300">
+                                    <StackPanel>
+                                        <Image x:Name="QuestionImage" Source="{Binding QuestionImageSource}" 
+                                               Stretch="Uniform" Margin="5" MaxHeight="250"/>
+                                        <TextBlock Text="{Binding ImageDescription}" Margin="8" 
+                                                   TextWrapping="Wrap" Foreground="#5f6368"
+                                                   Visibility="{Binding ImageDescription, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                                
                                 <ItemsControl x:Name="QuestionOptionsItemsControl" ItemsSource="{Binding Options}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="0,8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <ContentControl x:Name="QuestionOptionSelectionControl" Grid.Column="0" />
-                                                <TextBlock Text="{Binding Text}" Grid.Column="1" Style="{StaticResource OptionTextStyle}"/>
-                                            </Grid>
+                                            <StackPanel Margin="0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ContentControl x:Name="QuestionOptionSelectionControl" Grid.Column="0" />
+                                                    <TextBlock Text="{Binding Text}" Grid.Column="1" Style="{StaticResource OptionTextStyle}"/>
+                                                </Grid>
+                                                
+                                                <!-- Изображение варианта ответа, если есть -->
+                                                <Border BorderBrush="#dadce0" BorderThickness="1" CornerRadius="4" 
+                                                        Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Margin="30,8,0,5" MaxHeight="200">
+                                                    <StackPanel>
+                                                        <Image x:Name="OptionImage" Source="{Binding OptionImageSource}" 
+                                                               Stretch="Uniform" Margin="5" MaxHeight="150"/>
+                                                        <TextBlock Text="{Binding ImageDescription}" Margin="8" 
+                                                                   TextWrapping="Wrap" Foreground="#5f6368"
+                                                                   Visibility="{Binding ImageDescription, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

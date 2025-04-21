@@ -88,8 +88,6 @@ namespace Project_Vote
             else
             {
                 UserNameText.Text = "Гость";
-                
-                
                 LoginButton.Visibility = Visibility.Visible;
                 RegisterButton.Visibility = Visibility.Visible;
                 SeparatorText.Visibility = Visibility.Visible;
@@ -104,7 +102,6 @@ namespace Project_Vote
         {
             try
             {
-               
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -130,14 +127,11 @@ namespace Project_Vote
         {
             try
             {
-                // Проверяем, что EffectCanvas существует
                 if (EffectCanvas == null)
                 {
                     Console.WriteLine("EffectCanvas не найден");
                     return;
                 }
-
-                // Очищаем элементы, если они уже существуют
                 if (leftFill != null && EffectCanvas.Children.Contains(leftFill))
                 {
                     EffectCanvas.Children.Remove(leftFill);
@@ -147,8 +141,6 @@ namespace Project_Vote
                 {
                     EffectCanvas.Children.Remove(rightFill);
                 }
-
-                // Создаем новые элементы
             leftFill = new System.Windows.Shapes.Path
             {
                 Stroke = Brushes.Transparent,
@@ -156,7 +148,6 @@ namespace Project_Vote
                     Opacity = 0.6,
                     Visibility = Visibility.Visible
             };
-           
             rightFill = new System.Windows.Shapes.Path
             {
                 Stroke = Brushes.Transparent,
@@ -164,17 +155,11 @@ namespace Project_Vote
                     Opacity = 0.6,
                     Visibility = Visibility.Visible
             };
-            
-                // Добавляем в EffectCanvas с проверкой
                 EffectCanvas.Children.Add(leftFill);
             EffectCanvas.Children.Add(rightFill);
-                // Устанавливаем позиции безопасно
                 SetElementPosition(leftFill, 0, 0);
-
             _lastRender = DateTime.Now;
                 _effectsInitialized = true;
-
-                // Безопасно подписываемся на событие рендеринга
                 CompositionTarget.Rendering -= CompositionTarget_Rendering;
             CompositionTarget.Rendering += CompositionTarget_Rendering;
             }
@@ -215,16 +200,11 @@ namespace Project_Vote
       
         private void CompositionTarget_Rendering(object sender, EventArgs e)
         {
-            // Проверяем инициализацию, прежде чем продолжить
             if (!_effectsInitialized || leftFill == null || rightFill == null)
             {
                 return;
             }
-
-            // Для пузырьков всегда показываем Canvas
             EffectCanvas.Visibility = Visibility.Visible;
-
-            // Показываем/скрываем волны в зависимости от состояния окна
             if (WindowState == WindowState.Maximized)
             {
                 if (leftFill != null) leftFill.Visibility = Visibility.Visible;
@@ -235,7 +215,6 @@ namespace Project_Vote
                 if (leftFill != null) leftFill.Visibility = Visibility.Collapsed;
                 if (rightFill != null) rightFill.Visibility = Visibility.Collapsed;
             }
-
             DateTime now = DateTime.Now;
             double deltaTime = (now - _lastRender).TotalSeconds;
             _lastRender = now;
@@ -323,71 +302,14 @@ namespace Project_Vote
                 var sb = (Storyboard)FindResource("OpenSidePanelStoryboard");
                 sb.Begin();
                 isSidePanelOpen = true;
-                
-                // Добавляем анимацию превращения в крестик
                 Button hamburgerButton = sender as Button;
-                if (hamburgerButton != null)
-                {
-                    var buttonTemplate = hamburgerButton.Template;
-                    var line1 = buttonTemplate.FindName("Line1", hamburgerButton) as Rectangle;
-                    var line2 = buttonTemplate.FindName("Line2", hamburgerButton) as Rectangle;
-                    var line3 = buttonTemplate.FindName("Line3", hamburgerButton) as Rectangle;
-                    
-                    if (line1 != null && line2 != null && line3 != null)
-                    {
-                        // Анимация верхней линии
-                        DoubleAnimation rotateAnim1 = new DoubleAnimation(45, TimeSpan.FromSeconds(0.3));
-                        DoubleAnimation translateYAnim1 = new DoubleAnimation(8, TimeSpan.FromSeconds(0.3));
-                        
-                        // Анимация средней линии
-                        DoubleAnimation opacityAnim = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                        
-                        // Анимация нижней линии
-                        DoubleAnimation rotateAnim3 = new DoubleAnimation(-45, TimeSpan.FromSeconds(0.3));
-                        DoubleAnimation translateYAnim3 = new DoubleAnimation(-8, TimeSpan.FromSeconds(0.3));
-                        
-                        // Начинаем анимации
-                        //((TransformGroup)line1.RenderTransform).Children[1].BeginAnimation(RotateTransform.AngleProperty, rotateAnim1);
-                        //((TransformGroup)line1.RenderTransform).Children[0].BeginAnimation(TranslateTransform.YProperty, translateYAnim1);
-                        
-                        //((TransformGroup)line2.RenderTransform).Children[0].BeginAnimation(ScaleTransform.ScaleXProperty, opacityAnim);
-                        
-                        //((TransformGroup)line3.RenderTransform).Children[1].BeginAnimation(RotateTransform.AngleProperty, rotateAnim3);
-                       // ((TransformGroup)line3.RenderTransform).Children[0].BeginAnimation(TranslateTransform.YProperty, translateYAnim3);
-                    }
-                }
             }
             else
             {
                 var sb = (Storyboard)FindResource("CloseSidePanelStoryboard");
                 sb.Begin();
                 isSidePanelOpen = false;
-                
-                // Добавляем анимацию возврата к исходному виду
                 Button hamburgerButton = sender as Button;
-                if (hamburgerButton != null)
-                {
-                    var buttonTemplate = hamburgerButton.Template;
-                    var line1 = buttonTemplate.FindName("Line1", hamburgerButton) as Rectangle;
-                    var line2 = buttonTemplate.FindName("Line2", hamburgerButton) as Rectangle;
-                    var line3 = buttonTemplate.FindName("Line3", hamburgerButton) as Rectangle;
-                    
-                    if (line1 != null && line2 != null && line3 != null)
-                    {
-                        // Анимация верхней линии
-                        DoubleAnimation rotateAnim1 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                        DoubleAnimation translateYAnim1 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                        
-                        // Анимация средней линии
-                        DoubleAnimation opacityAnim = new DoubleAnimation(1, TimeSpan.FromSeconds(0.3));
-                        
-                        // Анимация нижней линии
-                        DoubleAnimation rotateAnim3 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                        DoubleAnimation translateYAnim3 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                        
-                       
-                    }
-                }
             }
         }
 
@@ -395,71 +317,33 @@ namespace Project_Vote
         {
             var sb = (Storyboard)FindResource("CloseSidePanelStoryboard");
             sb.Begin();
-            isSidePanelOpen = false;
-            
-            // Анимируем гамбургер-кнопку при закрытии панели
-            Button hamburgerButton = HamburgerButton;
-            if (hamburgerButton != null)
-            {
-                var buttonTemplate = hamburgerButton.Template;
-                var line1 = buttonTemplate.FindName("Line1", hamburgerButton) as Rectangle;
-                var line2 = buttonTemplate.FindName("Line2", hamburgerButton) as Rectangle;
-                var line3 = buttonTemplate.FindName("Line3", hamburgerButton) as Rectangle;
-                
-                if (line1 != null && line2 != null && line3 != null)
-                {
-                    // Анимация верхней линии
-                    DoubleAnimation rotateAnim1 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                    DoubleAnimation translateYAnim1 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                    
-                    // Анимация средней линии
-                    DoubleAnimation opacityAnim = new DoubleAnimation(1, TimeSpan.FromSeconds(0.3));
-                    
-                    // Анимация нижней линии
-                    DoubleAnimation rotateAnim3 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                    DoubleAnimation translateYAnim3 = new DoubleAnimation(0, TimeSpan.FromSeconds(0.3));
-                    
-                    // Начинаем анимации
-                    ((TransformGroup)line1.RenderTransform).Children[1].BeginAnimation(RotateTransform.AngleProperty, rotateAnim1);
-                    ((TransformGroup)line1.RenderTransform).Children[0].BeginAnimation(TranslateTransform.YProperty, translateYAnim1);
-                    
-                    ((TransformGroup)line2.RenderTransform).Children[0].BeginAnimation(ScaleTransform.ScaleXProperty, opacityAnim);
-                    
-                    ((TransformGroup)line3.RenderTransform).Children[1].BeginAnimation(RotateTransform.AngleProperty, rotateAnim3);
-                    ((TransformGroup)line3.RenderTransform).Children[0].BeginAnimation(TranslateTransform.YProperty, translateYAnim3);
-                }
-            }
         }
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             try
             {
-                // Проверяем, не находится ли курсор над элементом управления
                 if (e.OriginalSource is FrameworkElement element)
                 {
-                    if (element is Button || element.Parent is Button || 
-                        element is TextBox || element.Parent is TextBox)
+                    if (element is Button || element.Parent is Button || element is TextBox || element.Parent is TextBox)
                     {
-                        // Не создаем пузырьки при клике на кнопки и текстовые поля
                         return;
                     }
                 }
 
-                // Создаем пузырьки
             Point pos = e.GetPosition(EffectCanvas);
             int bubbleCount = _random.Next(5, 15);
             for (int i = 0; i < bubbleCount; i++)
             {
                 CreateBubble(pos);
-                }
             }
+        }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при создании пузырьков: {ex.Message}");
             }
         }
-
+        //пузыри
         private void CreateBubble(Point origin)
         {
             if (EffectCanvas == null) return;
@@ -474,7 +358,6 @@ namespace Project_Vote
                     Opacity = 0.8,
                     Visibility = Visibility.Visible
             };
-
             LinearGradientBrush bubbleBrush = new LinearGradientBrush();
             double randomAngle = _random.NextDouble() * 360;
             double rad = randomAngle * Math.PI / 180.0;
@@ -485,17 +368,11 @@ namespace Project_Vote
             bubbleBrush.GradientStops.Add(new GradientStop(Color.FromArgb(180, 0, 0, 255), 0));
             bubbleBrush.GradientStops.Add(new GradientStop(Color.FromArgb(180, 128, 0, 128), 1));
             bubble.Fill = bubbleBrush;
-
-                // Добавляем элемент перед установкой позиции
-                EffectCanvas.Children.Add(bubble);
-                
-                // Безопасная установка позиции
+            EffectCanvas.Children.Add(bubble);
             Canvas.SetLeft(bubble, origin.X - size / 2);
             Canvas.SetTop(bubble, origin.Y - size / 2);
-
             TranslateTransform transform = new TranslateTransform();
             bubble.RenderTransform = transform;
-
             double angle = _random.NextDouble() * 2 * Math.PI;
             double distance = _random.Next(30, 101);
             double offsetX = Math.Cos(angle) * distance;
@@ -519,17 +396,12 @@ namespace Project_Vote
 
             sb.Completed += (s, e) => EffectCanvas.Children.Remove(bubble);
             sb.Begin();
-            }
+        }
             catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при создании пузырька: {ex.Message}");
-            }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
         {
+                Console.WriteLine($"Ошибка при создании пузырька: {ex.Message}");
         }
-
+        }
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             
@@ -901,21 +773,6 @@ namespace Project_Vote
 
         private void CreateVoteButton_Click(object sender, RoutedEventArgs e)
         {
-            // Удаляем анимацию пульсации при клике
-            // Button btn = (Button)sender;
-            // DoubleAnimation pulseAnimation = new DoubleAnimation
-            // {
-            //     From = 1.0,
-            //     To = 0.8,
-            //     Duration = TimeSpan.FromSeconds(0.1),
-            //     AutoReverse = true
-            // };
-
-            // ScaleTransform transform = new ScaleTransform(1, 1);
-            // btn.RenderTransform = transform;
-            // transform.BeginAnimation(ScaleTransform.ScaleXProperty, pulseAnimation);
-            // transform.BeginAnimation(ScaleTransform.ScaleYProperty, pulseAnimation);
-
             if (!CurrentUser.IsLoggedIn)
             {
                 ShowNotification("Для создания голосования необходимо войти в аккаунт", NotificationType.Warning);
@@ -984,10 +841,6 @@ namespace Project_Vote
             pollsWindow.Owner = this;
             pollsWindow.ShowDialog();
         }
-
-
-        /// <param name="userId">ID пользователя.</param>
-
         private List<PollSummary> GetUserPolls(int userId)
         {
             List<PollSummary> polls = new List<PollSummary>();

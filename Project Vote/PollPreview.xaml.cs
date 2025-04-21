@@ -6,11 +6,29 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents; 
 using System.Windows.Media; 
+using System.Windows.Data;
+using System.IO;
+using System.Windows.Media.Imaging;
+using System.Globalization;
 using PollOptionGolos = Project_Vote.Golos.PollOption;
 using QuestionGolos = Project_Vote.Golos.Question;
 
 namespace Project_Vote
 {
+    // Конвертер для отображения/скрытия элементов с изображениями
+    public class StringToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return !string.IsNullOrEmpty(value as string) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public partial class PollPreview : Window
     {
         private string _pollType;
@@ -43,7 +61,87 @@ namespace Project_Vote
             }
             _pollType = pollType;
             _pollData = pollData;
+            
+            // Подготовка изображений для предпросмотра
+            PrepareImagesForPreview();
+            
             Loaded += PollPreview_Loaded;
+        }
+        
+        // Метод для подготовки изображений в предпросмотре
+        private void PrepareImagesForPreview()
+        {
+            if (_pollType == "Тест с вопросами и вариантами ответов" && _pollData is ObservableCollection<QuestionGolos> questions)
+            {
+                foreach (var question in questions)
+                {
+                    // Загружаем изображение вопроса, если оно есть
+                    if (question.HasImage && question.ImageData != null)
+                    {
+                        try
+                        {
+                            using (MemoryStream ms = new MemoryStream(question.ImageData))
+                            {
+                                BitmapImage bitmap = new BitmapImage();
+                                bitmap.BeginInit();
+                                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                bitmap.StreamSource = ms;
+                                bitmap.EndInit();
+                                bitmap.Freeze();
+                                
+                                // Динамически добавляем свойство для привязки
+                                AddDynamicPropertyIfNeeded(question, "QuestionImageSource");
+                                question.GetType().GetProperty("QuestionImageSource")?.SetValue(question, bitmap);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке изображения вопроса: {ex.Message}");
+                        }
+                    }
+                    
+                    // Загружаем изображения вариантов ответов
+                    foreach (var option in question.Options)
+                    {
+                        if (option.HasImage && option.ImageData != null)
+                        {
+                            try
+                            {
+                                using (MemoryStream ms = new MemoryStream(option.ImageData))
+                                {
+                                    BitmapImage bitmap = new BitmapImage();
+                                    bitmap.BeginInit();
+                                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                    bitmap.StreamSource = ms;
+                                    bitmap.EndInit();
+                                    bitmap.Freeze();
+                                    
+                                    // Динамически добавляем свойство для привязки
+                                    AddDynamicPropertyIfNeeded(option, "OptionImageSource");
+                                    option.GetType().GetProperty("OptionImageSource")?.SetValue(option, bitmap);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке изображения варианта: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Метод для динамического добавления свойства
+        private void AddDynamicPropertyIfNeeded(object obj, string propertyName)
+        {
+            var property = obj.GetType().GetProperty(propertyName);
+            if (property == null)
+            {
+                // Если свойства нет, нельзя динамически добавить его
+                // Это только проверка, для реального добавления нужно использовать
+                // dynamic или расширить класс с этим свойством
+                System.Diagnostics.Debug.WriteLine($"Свойство {propertyName} не найдено и не может быть добавлено динамически");
+            }
         }
         private void PollPreview_Loaded(object sender, RoutedEventArgs e)
         {

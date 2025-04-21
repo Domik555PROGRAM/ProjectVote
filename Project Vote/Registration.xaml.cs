@@ -16,6 +16,7 @@ using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 using System.IO;
 using Project_Vote.Models;
+using System.Security.Cryptography;
 
 namespace Project_Vote
 {
@@ -237,6 +238,28 @@ namespace Project_Vote
             }
         }
 
+        // Метод для хеширования пароля с использованием SHA-256
+        private string HashPassword(string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                // Преобразуем пароль в массив байтов
+                byte[] bytes = Encoding.UTF8.GetBytes(password);
+                
+                // Вычисляем хеш SHA-256
+                byte[] hash = sha256.ComputeHash(bytes);
+                
+                // Преобразуем массив байтов в строку в шестнадцатеричном формате
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    builder.Append(hash[i].ToString("x2"));
+                }
+                
+                return builder.ToString();
+            }
+        }
+
         private bool SaveUserToDatabase(string email, string name, string password, byte[] photo)
         {
             try
@@ -265,13 +288,16 @@ namespace Project_Vote
                         return false;
                     }
 
+                    // Хешируем пароль
+                    string hashedPassword = HashPassword(password);
+
                     // Добавляем нового пользователя
                     string insertQuery = "INSERT INTO users (email, name, password, photo) VALUES (@email, @name, @password, @photo)";
                     using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@email", email);
                         cmd.Parameters.AddWithValue("@name", name);
-                        cmd.Parameters.AddWithValue("@password", password); // В реальном приложении пароль нужно хешировать
+                        cmd.Parameters.AddWithValue("@password", hashedPassword); // Используем хешированный пароль
                         cmd.Parameters.AddWithValue("@photo", photo);
 
                         cmd.ExecuteNonQuery();

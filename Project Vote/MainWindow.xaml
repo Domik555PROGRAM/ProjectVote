@@ -18,8 +18,6 @@
             <GradientStop Color="#4A90E2" Offset="0.0"/>
             <GradientStop Color="#357ABD" Offset="1.0"/>
         </LinearGradientBrush>
-        
-        <!-- Стиль для стандартных кнопок -->
         <Style x:Key="GradientButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -51,8 +49,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-            
-        <!-- Стиль для кнопки меню в боковой панели -->
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#333"/>
@@ -86,8 +82,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-            
-        <!-- Стиль для прозрачных кнопок с белой рамкой -->
         <Style x:Key="TransparentBorderButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
@@ -121,8 +115,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-            
-        <!-- Стиль для белых кнопок с цветным текстом -->
         <Style x:Key="WhiteButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#0066cc"/>
@@ -155,8 +147,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
-        <!-- Стиль для гамбургер-кнопки -->
         <Style x:Key="HamburgerButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -210,7 +200,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Storyboard x:Key="OpenSidePanelStoryboard">
             <ThicknessAnimation Storyboard.TargetName="SidePanel" 
                                 Storyboard.TargetProperty="Margin" 
@@ -235,14 +225,11 @@
     </Window.Resources>
 
     <Grid>
-        <!-- Основное содержимое окна -->
         <Grid>
         <Grid.RowDefinitions>
                 <RowDefinition Height="60"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-            <!-- Верхняя панель -->
             <Border Grid.Row="0" Background="#0066cc" Panel.ZIndex="1">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -250,20 +237,51 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
-                    <!-- Кнопка гамбургер-меню -->
                     <Button x:Name="HamburgerButton" Grid.Column="0" Margin="5,0,0,0"
                             Style="{StaticResource HamburgerButtonStyle}" 
                             Click="HamburgerButton_Click" Panel.ZIndex="99999"/>
-
-                    <!-- Название проекта -->
-                    <TextBlock Grid.Column="1" Text="Project Vote" Foreground="White" 
+                    <TextBlock Grid.Column="1" Text="Голос.by" Foreground="White" 
                                FontSize="26" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,30,0"/>
+                    <Border Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" 
+                            Background="#ffffff" CornerRadius="20" Width="400" Height="36" Margin="259,0,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="SearchBox" Grid.Column="0" BorderThickness="0" 
+                                     Background="Transparent" Padding="15,5,5,5" 
+                                     VerticalContentAlignment="Center"
+                                     FontSize="14" Foreground="#555555" Grid.ColumnSpan="2" Margin="10,0,26,0"/>
+                            <Button Grid.Column="1" Width="36" Height="36" 
+                                    Background="Transparent" BorderThickness="0" 
+                                    Cursor="Hand" Padding="5"
+                                    Click="SearchButton_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsPressed" Value="True">
 
-
-                    <!-- Панель профиля пользователя -->
+                                                <Setter Property="Background" Value="Transparent"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <Path Data="M13.3 14.7C9.9 17.1 5.1 16.9 2.1 14C-1.2 10.7 -1.2 5.3 2.1 2C5.4 -1.3 10.8 -1.3 14.1 2C17 5 17.2 9.7 14.8 13L22 20.2L20.2 22L13.3 14.7ZM12.1 12.1C14.6 9.6 14.6 5.4 12.1 2.9C9.6 0.4 5.4 0.4 2.9 2.9C0.4 5.4 0.4 9.6 2.9 12.1C5.4 14.6 9.6 14.6 12.1 12.1Z" 
+              Fill="#888888" Stretch="Uniform" Width="16" Height="16" Margin="16,10,4,10"/>
+                            </Button>
+                        </Grid>
+                    </Border>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,10,0">
-                        <!-- Кнопки входа/регистрации для неаутентифицированных пользователей -->
                         <Button x:Name="LoginButton" Content="Войти" Margin="5,0" 
                                 Click="Button_Click_2"
                                 Style="{StaticResource TransparentBorderButtonStyle}"/>
@@ -271,8 +289,6 @@
                         <Button x:Name="RegisterButton" Content="Регистрация" Margin="5,0" 
                                 Click="Button_Click_1"
                                 Style="{StaticResource WhiteButtonStyle}"/>
-
-                        <!-- Кнопка профиля для аутентифицированных пользователей -->
                         <Border BorderBrush="White" BorderThickness="0" Width="40" Height="40" CornerRadius="20" 
                                 Margin="10,0" MouseDown="ProfileBorder_MouseDown">
                         <Border.ContextMenu>
@@ -292,11 +308,8 @@
                 </StackPanel>
             </Grid>
         </Border>
-
-            <!-- Основное содержимое приложения -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <Grid>
-                    <!-- Боковая панель -->
                     <Border x:Name="SidePanel" Width="300" Background="#f8f8f8" HorizontalAlignment="Left"
                            BorderBrush="#ddd" BorderThickness="0,0,1,0" Margin="-300,0,0,0" Panel.ZIndex="2">
                         <StackPanel Margin="10,20">
@@ -314,16 +327,13 @@
                                     Style="{StaticResource GradientButtonStyle}"/>
                 </StackPanel>
                     </Border>
-
-                    <!-- Главный контент -->
                     <Grid Margin="20">
                 <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                        <!-- Заголовок страницы -->
-                        <TextBlock Grid.Row="0" Text="Добро пожаловать в Project Vote!" 
+                        <TextBlock Grid.Row="0" Text="Добро пожаловать в Голос.by!" 
                                   FontSize="32" FontWeight="Bold" Margin="0,20,0,30"/>
 
                         <!-- Основной контент -->
@@ -332,10 +342,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-
-                            <!-- Карточки с действиями -->
                             <WrapPanel Grid.Row="0" Margin="0,0,0,30" HorizontalAlignment="Center">
-                                <!-- Карточка "Создать опрос" -->
                                 <Border Width="350" Height="220" Margin="15" Background="White" 
                                        BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
                                     <Border.Effect>
@@ -354,10 +361,8 @@
                                         <Button Grid.Row="2" Content="Создать опрос" 
                                                HorizontalAlignment="Left" Click="CreateVoteButton_Click"
                                                Style="{StaticResource GradientButtonStyle}"/>
-                </Grid>
+                                    </Grid>
                                 </Border>
-
-                                <!-- Карточка "Ваши опросы" -->
                                 <Border Width="350" Height="220" Margin="15" Background="White" 
                                        BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
                                     <Border.Effect>
@@ -376,10 +381,8 @@
                                         <Button Grid.Row="2" Content="Посмотреть опросы" 
                                                 HorizontalAlignment="Left" Click="YourQuestionsButton_Click"
                                                 Style="{StaticResource GradientButtonStyle}"/>
-                                    </Grid>
+                </Grid>
                             </Border>
-
-                                <!-- Карточка "Шаблоны" -->
                                 <Border Width="350" Height="220" Margin="15" Background="White" 
                                        BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
                                     <Border.Effect>
@@ -401,8 +404,6 @@
                                     </Grid>
                             </Border>
                             </WrapPanel>
-
-                            <!-- Дополнительный контент -->
                             <Border Grid.Row="1" Background="#f9f9f9" BorderBrush="#ddd" 
                                    BorderThickness="1" CornerRadius="8" Padding="30">
                                 <StackPanel>

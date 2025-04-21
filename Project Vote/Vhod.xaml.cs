@@ -5,6 +5,8 @@ using Project_Vote.Models;
 using MySql.Data.MySqlClient;
 using System.IO;
 using System.Windows.Media;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Project_Vote
 {
@@ -15,6 +17,28 @@ namespace Project_Vote
     {
         private string connectionString = "Server=localhost;Port=3306;Database=voteuser;Uid=root";
         private bool isPasswordVisible = false;
+
+        // Метод для хеширования пароля с использованием SHA-256
+        private string HashPassword(string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                // Преобразуем пароль в массив байтов
+                byte[] bytes = Encoding.UTF8.GetBytes(password);
+                
+                // Вычисляем хеш SHA-256
+                byte[] hash = sha256.ComputeHash(bytes);
+                
+                // Преобразуем массив байтов в строку в шестнадцатеричном формате
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    builder.Append(hash[i].ToString("x2"));
+                }
+                
+                return builder.ToString();
+            }
+        }
 
         public Vhod()
         {
@@ -160,12 +184,15 @@ namespace Project_Vote
                             ShowError(EmailErrorText, "Таблица пользователей не существует. Сначала зарегистрируйтесь.");
                             return;
                         }
+
+                        // Хешируем пароль перед проверкой
+                        string hashedPassword = HashPassword(password);
                         
                         string query = "SELECT * FROM users WHERE email = @email AND password = @password";
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
                             cmd.Parameters.AddWithValue("@email", EmailTextBox.Text);
-                            cmd.Parameters.AddWithValue("@password", password);
+                            cmd.Parameters.AddWithValue("@password", hashedPassword);
 
                             using (MySqlDataReader reader = cmd.ExecuteReader())
                             {
