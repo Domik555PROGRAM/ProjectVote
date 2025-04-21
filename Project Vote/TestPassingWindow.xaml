@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Project_Vote"
         mc:Ignorable="d"
-        Title="Прохождение теста" Height="600" Width="800"
+        Title="Прохождение теста" Height="700" Width="900"
         WindowStartupLocation="CenterOwner"
         Background="#f0f0f0">
     <Grid Margin="20">
@@ -36,8 +36,24 @@
             <StackPanel>
                 <Border Background="White" BorderBrush="#ddd" BorderThickness="1" 
                         CornerRadius="5" Padding="20" Margin="0,0,0,15">
-                    <TextBlock x:Name="QuestionText" Text="Текст вопроса..." FontSize="16" 
-                              TextWrapping="Wrap" Foreground="#333"/>
+                    <StackPanel>
+                        <TextBlock x:Name="QuestionText" Text="Текст вопроса..." FontSize="18" 
+                                   TextWrapping="Wrap" Foreground="#333" Margin="0,0,0,15"
+                                   FontWeight="SemiBold"/>
+                        
+                        <!-- Изображение вопроса -->
+                        <Border x:Name="QuestionImageBorder" BorderBrush="#eee" BorderThickness="1" 
+                                Margin="0,10,0,10" Visibility="Collapsed">
+                            <StackPanel>
+                                <Image x:Name="QuestionImage" Stretch="Uniform" MaxHeight="300" 
+                                       Margin="5,5,5,5"/>
+                                <TextBlock x:Name="QuestionImageDescription" Text="" 
+                                           Foreground="#666" FontSize="12" Margin="5,5,5,5"
+                                           TextWrapping="Wrap" HorizontalAlignment="Left"
+                                           Background="#f8f8f8" Padding="5"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Border>
 
                 <StackPanel x:Name="OptionsPanel" Margin="10,0,0,0">
