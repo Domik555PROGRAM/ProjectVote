@@ -67,6 +67,9 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PasswordPromptWindow.xaml.cs">
+      <DependentUpon>PasswordPromptWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PollPreview.xaml.cs">
       <DependentUpon>PollPreview.xaml</DependentUpon>
     </Compile>
@@ -105,6 +108,10 @@
     <Page Include="MainWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
+    </Page>
+    <Page Include="PasswordPromptWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PollPreview.xaml">
       <SubType>Designer</SubType>

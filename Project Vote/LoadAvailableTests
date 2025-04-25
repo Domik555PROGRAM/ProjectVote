@@ -1,0 +1,45 @@
+// Отладка загрузки паролей
+private void DebugPasswords()
+{
+    try
+    {
+        using (MySqlConnection conn = new MySqlConnection(connectionString))
+        {
+            conn.Open();
+            
+            string query = "SELECT id, title, password FROM polls WHERE poll_type LIKE '%Тест%'";
+            
+            using (MySqlCommand cmd = new MySqlCommand(query, conn))
+            {
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    string debugInfo = "Пароли в базе данных:\n\n";
+                    bool hasAnyPasswords = false;
+                    
+                    while (reader.Read())
+                    {
+                        int id = reader.GetInt32("id");
+                        string title = reader.GetString("title");
+                        bool hasPassword = !reader.IsDBNull(reader.GetOrdinal("password"));
+                        string password = hasPassword ? reader.GetString("password") : "NULL";
+                        
+                        debugInfo += $"ID: {id}, Название: {title}\nПароль: {password}\n\n";
+                        if (hasPassword) hasAnyPasswords = true;
+                    }
+                    
+                    if (!hasAnyPasswords)
+                    {
+                        debugInfo += "НИ ОДИН ТЕСТ НЕ ИМЕЕТ ПАРОЛЯ!";
+                    }
+                    
+                    MessageBox.Show(debugInfo, "Отладка паролей в БД", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Ошибка при отладке паролей: {ex.Message}", 
+            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+} 

@@ -67,3 +67,4 @@
         <Button Grid.Row="2" Content="Закрыть" HorizontalAlignment="Right" Margin="0,15,0,0" Padding="15,5" Click="CloseButton_Click"/>
     </Grid>
 </Window> 
+ 

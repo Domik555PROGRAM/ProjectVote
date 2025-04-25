@@ -186,6 +186,45 @@ namespace Project_Vote
             {
                 try
                 {
+                    // Проверяем, защищен ли тест паролем
+                    bool hasPassword = false;
+                    
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        string query = "SELECT password FROM polls WHERE id = @pollId";
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@pollId", pollId);
+                            var result = cmd.ExecuteScalar();
+                            hasPassword = (result != null && result != DBNull.Value && !string.IsNullOrEmpty(result.ToString()));
+                        }
+                    }
+                    
+                    if (hasPassword)
+                    {
+                        // Создаем окно для ввода пароля
+                        PasswordPromptWindow passwordWindow = new PasswordPromptWindow(pollToRun.Title);
+                        
+                        if (passwordWindow.ShowDialog() == true)
+                        {
+                            string enteredPassword = passwordWindow.Password;
+                            
+                            // Проверяем введенный пароль
+                            if (!CheckTestPassword(pollId, enteredPassword))
+                            {
+                                MessageBox.Show("Неверный пароль!", "Ошибка аутентификации", 
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            // Пользователь отменил ввод пароля
+                            return;
+                        }
+                    }
+                    
                     var testWindow = new TestPassingWindow(pollToRun.Id, pollToRun.Title);
                     testWindow.Owner = this;
                     testWindow.ShowDialog();
@@ -197,10 +236,50 @@ namespace Project_Vote
             }
             else
             {
-                // Для обычных опросов (одиночный или множественный выбор)
-                MessageBox.Show($"Опрос '{pollToRun.Title}' не является тестом с вопросами. Для обычных опросов функция прохождения находится в разработке.", 
+                // Для других типов опросов (будущая функциональность)
+                MessageBox.Show("Функция прохождения этого типа опроса находится в разработке.", 
                     "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        // Метод для проверки пароля теста
+        private bool CheckTestPassword(int testId, string password)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    
+                    string query = "SELECT password FROM polls WHERE id = @testId";
+                    
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@testId", testId);
+                        
+                        object result = cmd.ExecuteScalar();
+                        
+                        if (result == null || result == DBNull.Value)
+                        {
+                            // Если пароль в базе NULL, то тест не должен быть защищен
+                            return true;
+                        }
+                        
+                        string storedPassword = result.ToString().Trim();
+                        string inputPassword = password.Trim();
+                        
+                        // Прямое сравнение паролей
+                        return string.Equals(storedPassword, inputPassword, StringComparison.Ordinal);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при проверке пароля: {ex.Message}", 
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
             }
         }
     }
 }
+ 

@@ -8,6 +8,9 @@
         Title="Доступные тесты" Height="600" Width="800"
         WindowStartupLocation="CenterOwner"
         Background="#f0f0f0">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -39,13 +42,30 @@
                                 <TextBlock Text="Создано: " Foreground="#666"/>
                                 <TextBlock Text="{Binding CreatedAt, StringFormat=dd.MM.yyyy}" Foreground="#666" Margin="0,0,15,0"/>
                                 <TextBlock Text="Вопросов: " Foreground="#666"/>
-                                <TextBlock Text="{Binding QuestionsCount}" Foreground="#666"/>
+                                <TextBlock Text="{Binding QuestionsCount}" Foreground="#666" Margin="0,0,15,0"/>
+                                
+                                <StackPanel Orientation="Horizontal" 
+                                         Visibility="{Binding HasPassword, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Text="🔒" Foreground="#C71585" FontWeight="Bold" Margin="0,0,3,0"/>
+                                    <TextBlock Text="Защищено паролем" Foreground="#C71585" FontSize="12" 
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="2" Orientation="Horizontal">
                                 <Button Content="Пройти тест" Padding="15,8" Background="#0066cc" 
                                         Foreground="White" BorderThickness="0" Tag="{Binding Id}" 
                                         Click="StartTest_Click">
+                                    <Button.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="4"/>
+                                        </Style>
+                                    </Button.Resources>
+                                </Button>
+                                
+                                <Button Content="Изменить" Padding="15,8" Background="#4CAF50" 
+                                        Foreground="White" BorderThickness="0" Tag="{Binding Id}" 
+                                        Click="EditTest_Click" Margin="10,0,0,0">
                                     <Button.Resources>
                                         <Style TargetType="Border">
                                             <Setter Property="CornerRadius" Value="4"/>

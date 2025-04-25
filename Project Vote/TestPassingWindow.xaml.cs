@@ -100,6 +100,12 @@ namespace Project_Vote
                                 if (!pollReader.IsDBNull(pollReader.GetOrdinal("poll_type")))
                                 {
                                     _pollType = pollReader.GetString("poll_type");
+                                    // При загрузке типа теста устанавливаем значение по умолчанию
+                                    // для возможности множественного выбора
+                                    if (!_pollType.Contains("Множественный выбор"))
+                                    {
+                                        _pollType = "Тест с вопросами и вариантами ответов";
+                                    }
                                 }
                                 
                                 if (!pollReader.IsDBNull(pollReader.GetOrdinal("options")))
@@ -389,8 +395,26 @@ namespace Project_Vote
             OptionsPanel.Children.Clear();
 
             // Определяем, нужно ли использовать чекбоксы для множественного выбора
-            bool useCheckboxes = _pollType != null && (_pollType.Contains("Множественный выбор") || 
-                                                     currentQuestion.Options.Count(o => o.IsCorrect) > 1);
+            bool useCheckboxes = false;
+            
+            // Проверяем тип опроса/теста
+            if (_pollType != null)
+            {
+                // Если в типе опроса указано, что это множественный выбор
+                if (_pollType.Contains("Множественный выбор"))
+                {
+                    useCheckboxes = true;
+                }
+                // Если это стандартный тест, но с несколькими правильными ответами
+                else if (_pollType.Contains("Тест с вопросами и вариантами ответов") && 
+                         currentQuestion.Options.Count(o => o.IsCorrect) > 1)
+                {
+                    useCheckboxes = true;
+                }
+            }
+
+            // Создаем уникальное имя группы для RadioButton
+            string radioGroupName = $"Question_{currentQuestion.Id}_Group";
 
             // Создаем варианты ответов
             foreach (var option in currentQuestion.Options)
@@ -506,6 +530,9 @@ namespace Project_Vote
                             currentQuestion.SelectedOptionIds.Add(optionId);
                         }
                     };
+
+                    // Добавляем RadioButton в группу для связывания кнопок
+                    radioButton.GroupName = radioGroupName;
 
                     optionPanel.Children.Add(radioButton);
                 }

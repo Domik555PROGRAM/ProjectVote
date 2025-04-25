@@ -79,9 +79,9 @@
             </Setter>
         </Style>
     </Window.Resources>
-
+    
     <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="50,20,50,40">
                 <TextBlock FontSize="24" FontWeight="Bold" Margin="0,20,0,20" HorizontalAlignment="Center">Создание опроса/теста</TextBlock>
                 <!-- Название опроса -->
@@ -96,14 +96,14 @@
                 <!-- Описание опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Описание</TextBlock>
                 <RichTextBox x:Name="DescriptionRichTextBox"
-                             AcceptsReturn="True"
-                             MinHeight="200"
-                             Margin="0,0,0,15"
-                             Padding="8,5"
-                             FontSize="14"
-                             BorderBrush="#ccc"
-                             BorderThickness="1"
-                             TextChanged="DescriptionRichTextBox_TextChanged"/>
+                         AcceptsReturn="True"
+                         MinHeight="200"
+                         Margin="0,0,0,15"
+                         Padding="8,5"
+                         FontSize="14"
+                         BorderBrush="#ccc"
+                         BorderThickness="1"
+                         TextChanged="DescriptionRichTextBox_TextChanged"/>
                 <!-- Тип опроса -->
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Тип опроса/теста</TextBlock>
                 <ComboBox x:Name="PollTypeComboBox" SelectedIndex="0" Margin="0,0,0,15" Padding="8,5" FontSize="14" 
@@ -112,8 +112,40 @@
                     <ComboBoxItem>Множественный выбор (флажки)</ComboBoxItem>
                     <ComboBoxItem>Тест с вопросами и вариантами ответов</ComboBoxItem>
                 </ComboBox>
+                
+                <!-- Панель для пароля (только для тестов) -->
+                <StackPanel x:Name="PasswordPanel" Visibility="Collapsed" Margin="0,0,0,15">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Пароль для теста</TextBlock>
+                    
+                    <!-- Контейнер для поля пароля и кнопки просмотра -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <PasswordBox x:Name="PasswordBox" Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
+                        
+                        <Button x:Name="TogglePasswordButton" Grid.Column="1" Content="👁" Width="40" BorderThickness="0"
+                                Click="TogglePasswordVisibility_Click" Margin="5,0,0,0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        
+                        <!-- Текстовое поле для отображения пароля (обычно скрыто) -->
+                        <TextBox x:Name="PasswordTextBox" Grid.Column="0" Padding="8,5" FontSize="14" BorderBrush="#ccc" 
+                                 BorderThickness="1" Visibility="Collapsed" TextChanged="PasswordTextBox_TextChanged"/>
+                    </Grid>
+                    
+                    <TextBlock Text="Установите пароль для защиты теста. Его нужно будет ввести при прохождении теста." 
+                               Foreground="#666" FontSize="12" Margin="0,5,0,0"/>
+                </StackPanel>
+                
                 <!-- Варианты для обычного опроса -->
-                <StackPanel>
+                    <StackPanel>
                     <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Варианты ответа</TextBlock>
                     <ItemsControl ItemsSource="{Binding ElementName=OptionsListBox, Path=ItemsSource}">
                         <ItemsControl.ItemTemplate>
@@ -133,11 +165,11 @@
                 <!-- Панель для теста с вопросами -->
                 <StackPanel x:Name="QuestionsPanel" Visibility="Collapsed">
                     <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Вопросы</TextBlock>
-                    <ItemsControl x:Name="QuestionsItemsControl">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                        <ItemsControl x:Name="QuestionsItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
                                 <Border BorderBrush="#ccc" BorderThickness="1" Margin="0,10" Padding="15">
-                                    <StackPanel>
+                                        <StackPanel>
                                         <TextBlock Text="Вопрос:" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                         <TextBox Text="{Binding QuestionText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" 
                                                  Margin="0,0,0,10" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
@@ -173,8 +205,8 @@
                                         
                                         <TextBlock Text="Варианты ответов:" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                         <ItemsControl ItemsSource="{Binding Options}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
                                                     <StackPanel Margin="0,5,0,15">
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
@@ -215,17 +247,17 @@
                                                             </StackPanel>
                                                         </Expander>
                                                     </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         <Button Content="Добавить вариант" HorizontalAlignment="Left" Click="AddOption_Click"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     <Button Content="Добавить вопрос" HorizontalAlignment="Left" Click="AddQuestion_Click"/>
-                </StackPanel>
+                    </StackPanel>
                 <!-- Кнопки внизу -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                     <Button x:Name="SaveButton" Content="Сохранить" Width="120" Click="SaveButton_Click"/>
