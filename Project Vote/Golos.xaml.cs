@@ -653,19 +653,6 @@ namespace Project_Vote
                 return;
             }
             
-            // Проверка пароля для тестов
-            if (PollTypeComboBox.SelectedIndex == 2) // Тест с вопросами и вариантами ответов
-            {
-                // Проверяем, установлен ли пароль
-                if (string.IsNullOrWhiteSpace(PasswordBox.Password))
-                {
-                    MessageBox.Show("Для сохранения теста необходимо установить пароль. Пароль нужен для защиты теста.",
-                                    "Пароль не установлен", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    PasswordBox.Focus();
-                    return;
-                }
-            }
-
             if (_currentPoll == null)
             {
                 _currentPoll = new Poll();
@@ -1080,8 +1067,9 @@ namespace Project_Vote
                     DescriptionRichTextBox.Document.Blocks.Clear();
                     DescriptionRichTextBox.Document.Blocks.Add(new Paragraph(new Run(description)));
                     
-                    // В режиме редактирования оставляем поле пароля пустым
-                    PasswordBox.Password = "";
+                    // Загружаем текущий пароль в поле ввода пароля
+                    PasswordBox.Password = password;
+                    
                     // Показываем панель пароля только если это тест
                     PasswordPanel.Visibility = pollType.Contains("Тест") ? Visibility.Visible : Visibility.Collapsed;
 

@@ -126,11 +126,7 @@ namespace Project_Vote
                     return;
                 }
                 
-                // Отладочная информация о тесте и его пароле
-                MessageBox.Show($"Выбран тест: {selectedTest.Title}\nID: {selectedTest.Id}\nПароль в списке: {selectedTest.Password}\nЗащищен паролем: {selectedTest.HasPassword}", 
-                    "Информация о тесте", MessageBoxButton.OK, MessageBoxImage.Information);
-                
-                // Проверяем наличие пароля напрямую из базы
+                // Получаем информацию о наличии пароля у теста
                 bool needsPassword = false;
                 string dbPassword = null;
                 
@@ -152,9 +148,7 @@ namespace Project_Vote
                     }
                 }
                 
-                MessageBox.Show($"Проверка пароля из БД:\nID теста: {testId}\nПароль в БД: {dbPassword}\nТребуется пароль: {needsPassword}", 
-                    "Проверка пароля", MessageBoxButton.OK, MessageBoxImage.Information);
-                
+                // Если тест имеет пароль, запрашиваем его
                 if (needsPassword)
                 {
                     var passwordWindow = new PasswordPromptWindow(selectedTest.Title, false);
@@ -164,22 +158,19 @@ namespace Project_Vote
                         
                         if (enteredPassword != dbPassword)
                         {
-                            MessageBox.Show($"Неверный пароль!\nВведено: '{enteredPassword}'\nОжидается: '{dbPassword}'", 
-                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show("Неверный пароль! Доступ к тесту запрещен.", 
+                                "Ошибка доступа", MessageBoxButton.OK, MessageBoxImage.Error);
                             return;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Пароль верный!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                     }
                     else
                     {
-                        // Пользователь нажал отмену
+                        // Пользователь отменил ввод пароля
                         return;
                     }
                 }
                 
+                // Если пароля нет или пароль верный, запускаем тест
                 var testWindow = new TestPassingWindow(testId, selectedTest.Title);
                 testWindow.Owner = this;
                 testWindow.ShowDialog();
@@ -193,27 +184,81 @@ namespace Project_Vote
         
         private void EditTest_Click(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.Tag == null) return;
-
-            int testId = (int)button.Tag;
-            var selectedTest = _availableTests.Find(t => t.Id == testId);
-            
-            if (selectedTest == null) return;
-
-            var passwordWindow = new PasswordPromptWindow(selectedTest.Title, true);
-            if (passwordWindow.ShowDialog() == true)
+            try
             {
-                string newPassword = passwordWindow.Password;
-                if (UpdateTestPassword(testId, newPassword))
+                var button = sender as Button;
+                if (button?.Tag == null) 
                 {
-                    MessageBox.Show("Пароль успешно изменен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    LoadAvailableTests(); // Перезагружаем список тестов
+                    MessageBox.Show("Ошибка: Tag кнопки не задан", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
-                else
+
+                int testId = (int)button.Tag;
+                var selectedTest = _availableTests.Find(t => t.Id == testId);
+                
+                if (selectedTest == null) 
                 {
-                    MessageBox.Show("Не удалось изменить пароль.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Ошибка: Тест с ID {testId} не найден", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
+
+                // Проверяем наличие пароля у теста
+                bool needsPassword = false;
+                string dbPassword = null;
+                
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = "SELECT password FROM polls WHERE id = @testId";
+                    
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@testId", testId);
+                        var result = cmd.ExecuteScalar();
+                        
+                        if (result != null && result != DBNull.Value)
+                        {
+                            dbPassword = result.ToString().Trim();
+                            needsPassword = !string.IsNullOrWhiteSpace(dbPassword);
+                        }
+                    }
+                }
+                
+                // Если тест защищен паролем, требуем его ввод
+                if (needsPassword)
+                {
+                    var passwordWindow = new PasswordPromptWindow(selectedTest.Title, true);
+                    if (passwordWindow.ShowDialog() == true)
+                    {
+                        string enteredPassword = passwordWindow.Password.Trim();
+                        
+                        if (enteredPassword != dbPassword)
+                        {
+                            MessageBox.Show("Неверный пароль! Доступ к редактированию запрещен.", 
+                                "Ошибка доступа", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // Пользователь отменил ввод пароля
+                        return;
+                    }
+                }
+                
+                // Если пароля нет или пароль верный, открываем редактор теста
+                var editWindow = new Golos();
+                editWindow.LoadPollForEditing(testId);
+                editWindow.Owner = this;
+                editWindow.ShowDialog();
+                
+                // После редактирования обновляем список тестов
+                LoadAvailableTests();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при редактировании теста: {ex.Message}\n{ex.StackTrace}", 
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         
