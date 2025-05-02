@@ -32,17 +32,31 @@ namespace Project_Vote
     {
         private string connectionString = "Server=localhost;Port=3306;Database=vopros;Uid=root";
         private List<TestItem> searchResults;
+        private string _currentSearchQuery;
 
         public SearchResultWindow(string searchQuery)
         {
             InitializeComponent();
+            _currentSearchQuery = searchQuery;
+            Title = $"Результаты поиска: {searchQuery}";
+            SearchBox.Text = searchQuery;
             SearchTests(searchQuery);
+        }
+
+        public void UpdateSearch(string searchQuery)
+        {
+            if (searchQuery != _currentSearchQuery)
+            {
+                _currentSearchQuery = searchQuery;
+                Title = $"Результаты поиска: {searchQuery}";
+                SearchTests(searchQuery);
+            }
         }
 
         private void SearchTests(string searchQuery)
         {
             searchResults = new List<TestItem>();
-            
+
             try
             {
                 using (var conn = new MySqlConnection(connectionString))
@@ -61,7 +75,7 @@ namespace Project_Vote
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@searchQuery", $"%{searchQuery}%");
-                        
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -70,12 +84,12 @@ namespace Project_Vote
                                 {
                                     Id = reader.GetInt32("id"),
                                     Title = reader.GetString("title"),
-                                    Author = reader.IsDBNull(reader.GetOrdinal("author")) ? 
+                                    Author = reader.IsDBNull(reader.GetOrdinal("author")) ?
                                              "Неизвестный автор" : reader.GetString("author"),
                                     CreatedAt = reader.GetDateTime("created_at"),
-                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? 
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ?
                                                   "" : reader.GetString("description"),
-                                    HasPassword = !reader.IsDBNull(reader.GetOrdinal("password")) && 
+                                    HasPassword = !reader.IsDBNull(reader.GetOrdinal("password")) &&
                                                  !string.IsNullOrEmpty(reader.GetString("password"))
                                 });
                             }
@@ -90,12 +104,13 @@ namespace Project_Vote
                 }
                 else
                 {
+                    TestsListView.ItemsSource = null;
                     NoResultsText.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при поиске тестов: {ex.Message}", 
+                MessageBox.Show($"Ошибка при поиске тестов: {ex.Message}",
                                 "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -108,7 +123,7 @@ namespace Project_Vote
 
             int testId = Convert.ToInt32(button.Tag);
             var selectedTest = searchResults.Find(t => t.Id == testId);
-            
+
             if (selectedTest == null)
                 return;
 
@@ -116,16 +131,16 @@ namespace Project_Vote
             if (selectedTest.HasPassword)
             {
                 string password = GetTestPassword(testId);
-                
+
                 // Показываем диалог для ввода пароля
                 var passwordWindow = new PasswordPromptWindow(selectedTest.Title, false);
                 if (passwordWindow.ShowDialog() == true)
                 {
                     string enteredPassword = passwordWindow.Password.Trim();
-                    
+
                     if (enteredPassword != password)
                     {
-                        MessageBox.Show("Неверный пароль! Доступ к тесту запрещен.", 
+                        MessageBox.Show("Неверный пароль! Доступ к тесту запрещен.",
                             "Ошибка доступа", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
@@ -135,7 +150,7 @@ namespace Project_Vote
                     return; // Пользователь отменил ввод пароля
                 }
             }
-            
+
             // Открываем окно прохождения теста
             var testWindow = new TestPassingWindow(testId, selectedTest.Title);
             testWindow.Owner = this;
@@ -150,12 +165,12 @@ namespace Project_Vote
                 {
                     conn.Open();
                     string query = "SELECT password FROM polls WHERE id = @testId";
-                    
+
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@testId", testId);
                         var result = cmd.ExecuteScalar();
-                        
+
                         if (result != null && result != DBNull.Value)
                         {
                             return result.ToString().Trim();
@@ -165,16 +180,42 @@ namespace Project_Vote
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при проверке пароля: {ex.Message}", 
+                MessageBox.Show($"Ошибка при проверке пароля: {ex.Message}",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
+
             return string.Empty;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                PerformSearch();
+            }
+        }
+
+        private void SearchAgain_Click(object sender, RoutedEventArgs e)
+        {
+            PerformSearch();
+        }
+
+        private void PerformSearch()
+        {
+            string searchQuery = SearchBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                MessageBox.Show("Пожалуйста, введите запрос для поиска",
+                                "Пустой запрос", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            UpdateSearch(searchQuery);
         }
     }
 }

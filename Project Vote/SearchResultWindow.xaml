@@ -8,18 +8,35 @@
         Title="Результаты поиска" Height="600" Width="900"
         WindowStartupLocation="CenterOwner"
         Background="#f8f8f8">
-    
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
         <TextBlock Grid.Row="0" Text="Результаты поиска" 
-                   FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
-        
-        <ListView x:Name="TestsListView" Grid.Row="1" 
+                   FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+        <Grid Grid.Row="1" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" BorderBrush="#ddd" 
+                    BorderThickness="1" CornerRadius="4">
+                <TextBox x:Name="SearchBox" Padding="10,8" FontSize="14" BorderThickness="0"
+                         KeyDown="SearchBox_KeyDown"/>
+            </Border>
+
+            <Button Grid.Column="1" Margin="10,0,0,0" Content="Искать" 
+                    Background="#4A90E2" Foreground="White" Padding="15,8"
+                    Click="SearchAgain_Click"/>
+        </Grid>
+
+        <ListView x:Name="TestsListView" Grid.Row="2" 
                   Background="White" BorderBrush="#ddd" BorderThickness="1"
                   ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListView.View>
@@ -43,12 +60,12 @@
             </ListView.View>
         </ListView>
 
-        <TextBlock x:Name="NoResultsText" Grid.Row="1" 
+        <TextBlock x:Name="NoResultsText" Grid.Row="2" 
                    Text="По вашему запросу ничего не найдено" 
                    FontSize="18" HorizontalAlignment="Center" 
                    VerticalAlignment="Center" Visibility="Collapsed"/>
 
-        <Button Grid.Row="2" Content="Закрыть" 
+        <Button Grid.Row="3" Content="Закрыть" 
                 HorizontalAlignment="Right" Margin="0,15,0,0"
                 Padding="15,8" Background="#4A90E2" Foreground="White"
                 Click="CloseButton_Click"/>

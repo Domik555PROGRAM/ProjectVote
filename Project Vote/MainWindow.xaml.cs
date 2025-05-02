@@ -817,7 +817,62 @@ namespace Project_Vote
 
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!CurrentUser.IsLoggedIn)
+            {
+                ShowNotification("Для поиска тестов необходимо войти в систему", NotificationType.Warning);
+                Vhod loginWindow = new Vhod();
+                if (loginWindow.ShowDialog() == true)
+                {
+                    UpdateUserInfo();
+                    PerformSearch();
+                }
+                return;
+            }
+            PerformSearch();
+        }
+        
+        private void PerformSearch()
+        {
+            string searchQuery = SearchBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                ShowNotification("Введите запрос для поиска", NotificationType.Warning);
+                return;
+            }
+            
+            // Проверяем, открыто ли уже окно поиска
+            SearchResultWindow existingWindow = null;
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window is SearchResultWindow searchWindow)
+                {
+                    existingWindow = searchWindow;
+                    break;
+                }
+            }
 
+            if (existingWindow != null)
+            {
+                // Если окно уже открыто, активируем его и обновляем результаты поиска
+                existingWindow.Activate();
+                // Предполагаем, что в SearchResultWindow есть метод UpdateSearch
+                (existingWindow as SearchResultWindow).UpdateSearch(searchQuery);
+            }
+            else
+            {
+                // Если окно не открыто, создаем новое
+                SearchResultWindow searchWindow = new SearchResultWindow(searchQuery);
+                searchWindow.Owner = this;
+                searchWindow.Show();
+            }
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SearchButton_Click(sender, e);
+            }
         }
 
         private void YourQuestionsButton_Click(object sender, RoutedEventArgs e)
@@ -841,6 +896,35 @@ namespace Project_Vote
             pollsWindow.Owner = this;
             pollsWindow.ShowDialog();
         }
+
+        private void TestResultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CurrentUser.IsLoggedIn)
+            {
+                ShowNotification("Для просмотра результатов тестов необходимо войти в систему", NotificationType.Warning);
+                return;
+            }
+            
+            // Проверяем, открыто ли уже окно результатов тестов
+            bool windowExists = false;
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window is SearchResultWindow)
+                {
+                    windowExists = true;
+                    window.Activate();
+                    break;
+                }
+            }
+            
+            if (!windowExists)
+            {
+                SearchResultWindow resultsWindow = new SearchResultWindow("");
+                resultsWindow.Owner = this;
+                resultsWindow.Show();
+            }
+        }
+
         private List<PollSummary> GetUserPolls(int userId)
         {
             List<PollSummary> polls = new List<PollSummary>();
