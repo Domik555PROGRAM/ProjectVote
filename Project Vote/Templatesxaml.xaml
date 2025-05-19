@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Project_Vote"
         mc:Ignorable="d"
-        Title="Шаблоны опросов" Height="800" Width="1200"
+        Title="Шаблоны опросов" Height="540" Width="800"
         FontFamily="Segoe UI">
     
     <Window.Resources>
@@ -84,7 +84,7 @@
         
         <!-- Заголовок страницы -->
         <StackPanel Grid.Row="0" Margin="30,20,30,10">
-            <TextBlock Text="Примеры опросов и шаблоны анкет" 
+            <TextBlock Text="Шаблоны голосований и тестов" 
                        FontSize="36" 
                        FontWeight="Bold" 
                        Foreground="#333333" 
@@ -94,8 +94,8 @@
                        Margin="0,0,0,20" 
                        FontSize="16" 
                        Foreground="#666666">
-                Используйте профессиональные шаблоны анкет в имеющемся виде или редактируйте их, внося необходимые изменения.
-                Шаблоны различных дизайнов опросов .
+                Выберите готовый шаблон для создания вашего голосования или теста. Используйте наши шаблоны для быстрого
+                запуска с возможностью загрузки изображений и настройки под ваши нужды.
             </TextBlock>
         </StackPanel>
         
@@ -105,157 +105,10 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
-                <!-- Левая колонка -->
+                <!-- Левая колонка - Тесты -->
                 <StackPanel Grid.Column="0">
-                    <!-- Примеры анкет для сотрудников -->
-                    <Border Style="{StaticResource CategoryPanelStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#EBF5FF" Grid.Column="0">
-                                <Image Source="/Resources/employee_icon.png" Width="32" Height="32"/>
-                            </Border>
-                            
-                            <!-- Содержимое категории -->
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Примеры анкет для сотрудников" Style="{StaticResource BlockHeaderStyle}"/>
-                                
-                                <!-- Трудоустройство -->
-                                <TextBlock Text="Трудоустройство" FontWeight="SemiBold" Foreground="#444444" Margin="0,10,0,5"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Удовлетворенность процедурой приема на работу" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Шаблон опроса по онбордингу / адаптации персонала" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <!-- Лояльность/Вовлеченность/Мотивация -->
-                                <TextBlock Text="Лояльность/Вовлеченность/Мотивация" FontWeight="SemiBold" Foreground="#444444" Margin="0,15,0,5"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Отношение к компании (опрос Липпонена)" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Уровень мотивации сотрудников" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тест на вовлеченность персонала (Gallup Q12)" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Удовлетворенность работой и вознаграждениями" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Удовлетворенность условиями труда с оценкой важности" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <!-- Уходящий сотрудник -->
-                                <TextBlock Text="Уходящий сотрудник" FontWeight="SemiBold" Foreground="#444444" Margin="0,15,0,5"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос уходящего сотрудника" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <!-- Прочее -->
-                                <TextBlock Text="Прочее" FontWeight="SemiBold" Foreground="#444444" Margin="0,15,0,5"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Корпоративная культура" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Диагностика аврала" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    
-                    <!-- Оценка / самооценка -->
-                    <Border Style="{StaticResource CategoryPanelStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#FFF2E0" Grid.Column="0">
-                                <Image Source="/Resources/evaluation_icon.png" Width="32" Height="32"/>
-                            </Border>
-                            
-                            <!-- Содержимое категории -->
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Оценка / самооценка" Style="{StaticResource BlockHeaderStyle}"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Оценка Performance Review" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Оценка 90 градусов" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос 180 градусов для оценки руководителя" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-                
-                <!-- Средняя колонка -->
-                <StackPanel Grid.Column="1">
                     <!-- Тесты -->
                     <Border Style="{StaticResource CategoryPanelStyle}">
                         <Grid>
@@ -264,10 +117,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#E0F7FF" Grid.Column="0">
-                                <Image Source="/Resources/test_icon.png" Width="32" Height="32"/>
-                            </Border>
+                           
                             
                             <!-- Содержимое категории -->
                             <StackPanel Grid.Column="1">
@@ -275,114 +125,58 @@
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тест: Контент и email-маркетинг" 
+                                    <TextBlock Text="Викторина с изображениями" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_image_quiz"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тестирование: Английский язык, уровень Advanced" 
+                                    <TextBlock Text="Тест на знание логотипов" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_logo_knowledge"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тестирование: Английский язык, уровень Intermediate" 
+                                    <TextBlock Text="Определение локаций по фотографиям" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_location_photos"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тест: Заполнение СЗВ-ТД" 
+                                    <TextBlock Text="Проверка знаний с иллюстрациями" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_knowledge_illustrations"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тест: Отпуска и отпускные" 
+                                    <TextBlock Text="Тест на распознавание объектов" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_object_recognition"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Тест по JavaScript для Middle-разработчика" 
+                                    <TextBlock Text="Проверка внимательности по картинкам" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Шаблон Теста Холла" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Индекс жизненной удовлетворенности (ИЖУ)" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    
-                    <!-- Опросы -->
-                    <Border Style="{StaticResource CategoryPanelStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#F0E7FF" Grid.Column="0">
-                                <Image Source="/Resources/survey_icon.png" Width="32" Height="32"/>
-                            </Border>
-                            
-                            <!-- Содержимое категории -->
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Опросы" Style="{StaticResource BlockHeaderStyle}"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос по оценке эффективности рекламной кампании" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос по выбору дизайна и характеристикам продукта" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос после посещения магазина" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос по оценке дизайна упаковки" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="test_attention_pictures"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
                     </Border>
                 </StackPanel>
                 
-                <!-- Правая колонка -->
-                <StackPanel Grid.Column="2">
+                <!-- Правая колонка - Голосования -->
+                <StackPanel Grid.Column="1">
                     <!-- Голосования -->
                     <Border Style="{StaticResource CategoryPanelStyle}">
                         <Grid>
@@ -391,10 +185,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#E3FFED" Grid.Column="0">
-                                <Image Source="/Resources/vote_icon.png" Width="32" Height="32"/>
-                            </Border>
+                           
                             
                             <!-- Содержимое категории -->
                             <StackPanel Grid.Column="1">
@@ -402,99 +193,50 @@
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Оценка изображения" 
+                                    <TextBlock Text="Выбор лучшей фотографии" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_best_photo"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Выбор лучшего изображения" 
+                                    <TextBlock Text="Рейтинг дизайн-проектов" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_design_projects"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Анкета обратной связи после мероприятия" 
+                                    <TextBlock Text="Голосование за варианты логотипа" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_logo_variants"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Обратная связь после корпоративного мероприятия" 
+                                    <TextBlock Text="Выбор лучшего места для мероприятия" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_event_location"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Оценка спикера на конференции" 
+                                    <TextBlock Text="Оценка макетов продукции" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_product_mockups"/>
                                 </StackPanel>
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Голосование по переизбранию руководящих должностных лиц" 
+                                    <TextBlock Text="Выбор новой униформы по фото" 
                                                Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Анкета регистрации на мероприятие" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    
-                    <!-- Разное -->
-                    <Border Style="{StaticResource CategoryPanelStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Иконка категории -->
-                            <Border Style="{StaticResource CategoryIconStyle}" Background="#FFF0F0" Grid.Column="0">
-                                <Image Source="/Resources/misc_icon.png" Width="32" Height="32"/>
-                            </Border>
-                            
-                            <!-- Содержимое категории -->
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Разное" Style="{StaticResource BlockHeaderStyle}"/>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос для выпускников университета" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Опрос студентов для оценки преподавателей ВУЗа" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Удовлетворенность студентов ВУЗа" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
-                                </StackPanel>
-                                
-                                <StackPanel Style="{StaticResource TemplateItemStyle}">
-                                    <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Оценка удовлетворенности пациента" 
-                                               Style="{StaticResource TemplateLinkStyle}"
-                                               MouseDown="Template_MouseDown"/>
+                                               MouseDown="Template_MouseDown"
+                                               Tag="vote_uniform_choice"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Project_Vote.Models
+﻿namespace Project_Vote.Models
 {
     public static class CurrentUser
     {

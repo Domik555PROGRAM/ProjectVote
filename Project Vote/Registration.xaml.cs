@@ -1,26 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Microsoft.Win32;
 using MySql.Data.MySqlClient;
-using System.IO;
 using Project_Vote.Models;
+using System;
+using System.IO;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Project_Vote
 {
-    
+
     public partial class Registration : Window
     {
         private string connectionString = "Server=localhost;Port=3306;Database=voteuser;Uid=root";
@@ -31,22 +24,22 @@ namespace Project_Vote
         {
             InitializeComponent();
             // Убираем автоматическое подключение к БД при открытии окна
-            
+
             // Проверим наличие изображений для кнопки видимости пароля
             try
             {
                 // Проверяем, существуют ли файлы изображений
                 string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 string resourcesDir = System.IO.Path.Combine(baseDirectory, "Resources");
-                
+
                 if (!Directory.Exists(resourcesDir))
                 {
                     Directory.CreateDirectory(resourcesDir);
                 }
-                
+
                 string eyeOnPath = System.IO.Path.Combine(resourcesDir, "eye_on.png");
                 string eyeOffPath = System.IO.Path.Combine(resourcesDir, "eye_off.png");
-                
+
                 // Если файлов нет, используем символы вместо изображений
                 if (!File.Exists(eyeOnPath) || !File.Exists(eyeOffPath))
                 {
@@ -85,14 +78,14 @@ namespace Project_Vote
         private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
         {
             isPasswordVisible = !isPasswordVisible;
-            
+
             if (isPasswordVisible)
             {
                 // Показываем пароль
                 PasswordVisibleBox.Text = PasswordBox.Password;
                 PasswordBox.Visibility = Visibility.Collapsed;
                 PasswordVisibleBox.Visibility = Visibility.Visible;
-                
+
                 // Меняем иконку на "глаз перечеркнутый"
                 if (PasswordVisibilityIcon != null)
                 {
@@ -118,7 +111,7 @@ namespace Project_Vote
                 PasswordBox.Password = PasswordVisibleBox.Text;
                 PasswordVisibleBox.Visibility = Visibility.Collapsed;
                 PasswordBox.Visibility = Visibility.Visible;
-                
+
                 // Меняем иконку на "глаз"
                 if (PasswordVisibilityIcon != null)
                 {
@@ -138,14 +131,14 @@ namespace Project_Vote
                     }
                 }
             }
-            
+
             // Фокусируем элемент ввода пароля
             if (isPasswordVisible)
                 PasswordVisibleBox.Focus();
             else
                 PasswordBox.Focus();
         }
-        
+
         // Синхронизация между видимым и скрытым полем пароля
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
@@ -155,7 +148,7 @@ namespace Project_Vote
                 ValidatePassword(PasswordBox.Password);
             }
         }
-        
+
         private void PasswordVisibleBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (isPasswordVisible)
@@ -164,18 +157,18 @@ namespace Project_Vote
                 ValidatePassword(PasswordVisibleBox.Text);
             }
         }
-        
+
         // Проверка требований к паролю
         private void ValidatePassword(string password)
         {
             // Проверка на наличие латинских букв разного регистра
             bool hasLatinLetters = Regex.IsMatch(password, "[a-z]") && Regex.IsMatch(password, "[A-Z]");
             LatinLettersCheck.Visibility = hasLatinLetters ? Visibility.Visible : Visibility.Collapsed;
-            
+
             // Проверка на наличие цифр или спецсимволов
             bool hasDigitsOrSymbols = Regex.IsMatch(password, "[0-9]") || Regex.IsMatch(password, "[!@#$%^&*(),.?\":{}|<>]");
             DigitsSymbolsCheck.Visibility = hasDigitsOrSymbols ? Visibility.Visible : Visibility.Collapsed;
-            
+
             // Проверка длины пароля
             bool hasMinLength = password.Length >= 8;
             LengthCheck.Visibility = hasMinLength ? Visibility.Visible : Visibility.Collapsed;
@@ -245,17 +238,17 @@ namespace Project_Vote
             {
                 // Преобразуем пароль в массив байтов
                 byte[] bytes = Encoding.UTF8.GetBytes(password);
-                
+
                 // Вычисляем хеш SHA-256
                 byte[] hash = sha256.ComputeHash(bytes);
-                
+
                 // Преобразуем массив байтов в строку в шестнадцатеричном формате
                 StringBuilder builder = new StringBuilder();
                 for (int i = 0; i < hash.Length; i++)
                 {
                     builder.Append(hash[i].ToString("x2"));
                 }
-                
+
                 return builder.ToString();
             }
         }
@@ -361,7 +354,7 @@ namespace Project_Vote
 
             // Проверяем Пароль
             string password = isPasswordVisible ? PasswordVisibleBox.Text : PasswordBox.Password;
-            
+
             if (string.IsNullOrWhiteSpace(password))
             {
                 ShowError(PasswordErrorText, "Пожалуйста, введите пароль");
@@ -383,11 +376,11 @@ namespace Project_Vote
                 hasErrors = true;
                 return;
             }
-            
+
             // Дополнительная проверка требований к паролю
             bool hasLatinLetters = Regex.IsMatch(password, "[a-z]") && Regex.IsMatch(password, "[A-Z]");
             bool hasDigitsOrSymbols = Regex.IsMatch(password, "[0-9]") || Regex.IsMatch(password, "[!@#$%^&*(),.?\":{}|<>]");
-            
+
             if (!hasLatinLetters || !hasDigitsOrSymbols)
             {
                 ShowError(PasswordErrorText, "Пароль должен содержать латинские буквы разного регистра и цифры или спецсимволы");
@@ -419,7 +412,7 @@ namespace Project_Vote
             if (!hasErrors)
             {
                 if (SaveUserToDatabase(EmailTextBox.Text, NameTextBox.Text, password, userPhotoData))
-                { 
+                {
                     // Сохраняем данные в CurrentUser
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
@@ -429,7 +422,7 @@ namespace Project_Vote
                         {
                             cmd.Parameters.AddWithValue("@email", EmailTextBox.Text);
                             int userId = Convert.ToInt32(cmd.ExecuteScalar());
-                            
+
                             CurrentUser.UserId = userId;
                             CurrentUser.Email = EmailTextBox.Text;
                             CurrentUser.Name = NameTextBox.Text;

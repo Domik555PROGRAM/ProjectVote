@@ -21,37 +21,49 @@
                    FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
         <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White" BorderBrush="#ddd" 
+            <!-- Выбор категории -->
+            <ComboBox x:Name="CategoryComboBox" Grid.Column="0" Width="150" Margin="0,0,10,0"
+                      SelectedIndex="0" SelectionChanged="CategoryComboBox_SelectionChanged">
+                <ComboBoxItem Content="Все"/>
+                <ComboBoxItem Content="Тесты"/>
+                <ComboBoxItem Content="Голосования"/>
+            </ComboBox>
+
+            <!-- Поле поиска -->
+            <Border Grid.Column="1" Background="White" BorderBrush="#ddd" 
                     BorderThickness="1" CornerRadius="4">
                 <TextBox x:Name="SearchBox" Padding="10,8" FontSize="14" BorderThickness="0"
                          KeyDown="SearchBox_KeyDown"/>
             </Border>
 
-            <Button Grid.Column="1" Margin="10,0,0,0" Content="Искать" 
+            <!-- Кнопка поиска -->
+            <Button Grid.Column="2" Margin="10,0,0,0" Content="Искать" 
                     Background="#4A90E2" Foreground="White" Padding="15,8"
                     Click="SearchAgain_Click"/>
         </Grid>
 
-        <ListView x:Name="TestsListView" Grid.Row="2" 
+        <ListView x:Name="ItemsListView" Grid.Row="2" 
                   Background="White" BorderBrush="#ddd" BorderThickness="1"
                   ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListView.View>
-                <GridView>
+                <GridView x:Name="ItemsGridView">
                     <GridViewColumn Header="ID" Width="60" DisplayMemberBinding="{Binding Id}"/>
                     <GridViewColumn Header="Название" Width="280" DisplayMemberBinding="{Binding Title}"/>
+                    <GridViewColumn Header="Тип" Width="100" DisplayMemberBinding="{Binding Type}"/>
                     <GridViewColumn Header="Автор" Width="150" DisplayMemberBinding="{Binding Author}"/>
                     <GridViewColumn Header="Дата создания" Width="150" DisplayMemberBinding="{Binding CreatedAt, StringFormat=dd.MM.yyyy}"/>
-                    <GridViewColumn Header="Действия" Width="220">
+                    <GridViewColumn Header="Действия" Width="120">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Пройти тест" 
+                                <Button Content="{Binding ActionButtonText}" 
                                         Background="#4A90E2" Foreground="White"
-                                        Padding="10,5" Width="120" 
-                                        Click="StartTest_Click"
+                                        Padding="10,5" 
+                                        Click="StartItem_Click"
                                         Tag="{Binding Id}"/>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>

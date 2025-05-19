@@ -230,7 +230,7 @@
                 <RowDefinition Height="60"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-            <Border Grid.Row="0" Background="#0066cc" Panel.ZIndex="1">
+            <Border Grid.Row="0" Background="#0066cc" Panel.ZIndex="10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -314,7 +314,7 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Border x:Name="SidePanel" Width="300" Background="#f8f8f8" HorizontalAlignment="Left"
-                           BorderBrush="#ddd" BorderThickness="0,0,1,0" Margin="-300,0,0,0" Panel.ZIndex="2">
+                           BorderBrush="#ddd" BorderThickness="0,0,1,0" Margin="-300,0,0,0" Panel.ZIndex="20">
                         <StackPanel Margin="10,20">
                             <TextBlock Text="Меню" FontSize="24" FontWeight="Bold" Margin="15,20,0,20"/>
                             <Button x:Name="YourQuestionsButtonMenu" Content="Ваши опросы" Click="YourQuestionsButton_Click"
@@ -323,16 +323,78 @@
                                     Style="{StaticResource MenuButtonStyle}"/>
                             <Button Content="Шаблоны опросов" Click="TemplatesButton_Click"
                                     Style="{StaticResource MenuButtonStyle}"/>
-                            <Button Content="Результаты тестов" Click="TestResultsButton_Click"
+                            <Button Content="Просмотр статистики" Click="ViewResultsButton_Click"
                                     Style="{StaticResource MenuButtonStyle}"/>
-                            <Button Content="Настройки" 
-                                    Style="{StaticResource MenuButtonStyle}"/>
+                            <TextBlock Text="Настройки эффектов" Margin="15,20,15,10" FontSize="18" FontWeight="Bold"/>
+                            <Grid Margin="15,5,15,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Эффект волны" VerticalAlignment="Center" FontSize="16"/>
+                                <ToggleButton x:Name="WaveEffectToggle" Grid.Column="1" IsChecked="True" 
+                                            Padding="8,3" Margin="5" Checked="WaveEffectToggle_Checked" Unchecked="WaveEffectToggle_Unchecked">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10"
+                                                  Width="40" Height="20">
+                                                <Ellipse x:Name="indicator" Fill="White" Width="14" Height="14" 
+                                                        HorizontalAlignment="Left" Margin="3,0,0,0"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="border" Property="Background" Value="#4A90E2"/>
+                                                    <Setter TargetName="indicator" Property="HorizontalAlignment" Value="Right"/>
+                                                    <Setter TargetName="indicator" Property="Margin" Value="0,0,3,0"/>
+                                                </Trigger>
+                                                <Trigger Property="IsChecked" Value="False">
+                                                    <Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                            </Grid>
+                            <Grid Margin="15,5,15,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Эффект пузырей" VerticalAlignment="Center" FontSize="16"/>
+                                <ToggleButton x:Name="BubbleEffectToggle" Grid.Column="1" IsChecked="True" 
+                                            Padding="8,3" Margin="5" Checked="BubbleEffectToggle_Checked" Unchecked="BubbleEffectToggle_Unchecked">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10"
+                                                  Width="40" Height="20">
+                                                <Ellipse x:Name="indicator" Fill="White" Width="14" Height="14" 
+                                                        HorizontalAlignment="Left" Margin="3,0,0,0"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="border" Property="Background" Value="#4A90E2"/>
+                                                    <Setter TargetName="indicator" Property="HorizontalAlignment" Value="Right"/>
+                                                    <Setter TargetName="indicator" Property="Margin" Value="0,0,3,0"/>
+                                                </Trigger>
+                                                <Trigger Property="IsChecked" Value="False">
+                                                    <Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                            </Grid>
                             <Button x:Name="ClosePanelButton" Content="Закрыть" Margin="0,30,0,5" 
                                     HorizontalAlignment="Center" Click="ClosePanelButton_Click"
                                     Style="{StaticResource GradientButtonStyle}"/>
                 </StackPanel>
                     </Border>
-                    <Grid Margin="20">
+                    
+                    <!-- Добавим перехватчик кликов вне панели для ее закрытия -->
+                    <Border x:Name="OverlayPanel" Background="Transparent" 
+                           Visibility="Collapsed" MouseDown="OverlayPanel_MouseDown" Panel.ZIndex="15"/>
+                    
+                    <Grid Margin="20" Panel.ZIndex="5">
                 <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -386,8 +448,28 @@
                                         <Button Grid.Row="2" Content="Посмотреть опросы" 
                                                 HorizontalAlignment="Left" Click="YourQuestionsButton_Click"
                                                 Style="{StaticResource GradientButtonStyle}"/>
-                </Grid>
-                            </Border>
+                                    </Grid>
+                                </Border>
+                                <Border Width="350" Height="220" Margin="15" Background="White" 
+                                       BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#ccc" BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <Grid Margin="25">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="Результаты голосований" 
+                                                  FontSize="22" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" Text="Просматривайте результаты голосований. Анализируйте голоса и наблюдайте за ходом голосования в реальном времени." 
+                                                  TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
+                                        <Button Grid.Row="2" Content="Показать результаты" 
+                                               HorizontalAlignment="Left" Click="ShowVotingResultsButton_Click"
+                                               Style="{StaticResource GradientButtonStyle}"/>
+                                    </Grid>
+                                </Border>
                                 <Border Width="350" Height="220" Margin="15" Background="White" 
                                        BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
                                     <Border.Effect>
@@ -407,7 +489,31 @@
                                                HorizontalAlignment="Left" Click="OpenTemplatesWindow_Click"
                                                Style="{StaticResource GradientButtonStyle}"/>
                                     </Grid>
-                            </Border>
+                                </Border>
+                                <Border Width="350" Height="220" Margin="15" Background="White" 
+                                       BorderBrush="#ddd" BorderThickness="1" CornerRadius="12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#ccc" BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <Grid Margin="25">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <TextBlock Grid.Row="0" Text="Результаты тестов" 
+                                                  FontSize="22" FontWeight="Bold"/>
+                                        
+                                        <TextBlock Grid.Row="1" 
+                                                  Text="Просматривайте статистику прохождения ваших тестов другими пользователями, детали каждого прохождения и общую аналитику."
+                                                  TextWrapping="Wrap" Margin="0,15,10,0" FontSize="15" Foreground="#555"/>
+                                        
+                                        <Button Grid.Row="2" Content="Просмотр результатов" 
+                                               HorizontalAlignment="Left" Click="ViewResultsButton_Click"
+                                               Style="{StaticResource GradientButtonStyle}"/>
+                                    </Grid>
+                                </Border>
                             </WrapPanel>
                             <Border Grid.Row="1" Background="#f9f9f9" BorderBrush="#ddd" 
                                    BorderThickness="1" CornerRadius="8" Padding="30">
@@ -416,6 +522,7 @@
                                     <TextBlock Text="• Добавлена возможность просмотра своих опросов" Margin="0,6" FontSize="15"/>
                                     <TextBlock Text="• Улучшен интерфейс создания опросов" Margin="0,6" FontSize="15"/>
                                     <TextBlock Text="• Добавлены шаблоны опросов" Margin="0,6" FontSize="15"/>
+                                    <TextBlock Text="• Добавлен просмотр статистики тестов" Margin="0,6" FontSize="15"/>
                                     <TextBlock Text="• Исправлены ошибки в работе системы" Margin="0,6" FontSize="15"/>
                                 </StackPanel>
                             </Border>
@@ -428,6 +535,6 @@
         <!-- Canvas для визуальных эффектов (волны и пузырьки) -->
         <Canvas x:Name="EffectCanvas" Panel.ZIndex="0" 
                 Background="Transparent"
-                IsHitTestVisible="False" Margin="-10,60,10,-60"/>
+                IsHitTestVisible="False" Margin="0,60,0,-60"/>
     </Grid>
 </Window>

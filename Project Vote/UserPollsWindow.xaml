@@ -5,9 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Project_Vote"
         mc:Ignorable="d"
-        Title="Ваши опросы" Height="450" Width="800"
-        WindowStartupLocation="CenterOwner"
+        Title="Ваши опросы" Height="450" Width="900"
+        WindowStartupLocation="CenterScreen"
         Background="#f0f0f0">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -20,15 +23,41 @@
         <ListView Grid.Row="1" x:Name="PollsListView" BorderThickness="1" BorderBrush="#ccc" Background="White">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
-                    <GridViewColumn Header="Заголовок" Width="300" DisplayMemberBinding="{Binding Title}"/>
-                    <GridViewColumn Header="Дата создания" Width="150" DisplayMemberBinding="{Binding CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"/>
-                    <GridViewColumn Header="Действия" Width="200">
+                    <GridViewColumn Header="ID" Width="40" DisplayMemberBinding="{Binding Id}"/>
+                    <GridViewColumn Header="Заголовок" Width="250" DisplayMemberBinding="{Binding Title}"/>
+                    <GridViewColumn Header="Тип" Width="120" DisplayMemberBinding="{Binding PollType}"/>
+                    <GridViewColumn Header="Дата создания" Width="150" DisplayMemberBinding="{Binding CreatedAt, StringFormat=\{0:dd.MM.yyyy HH:mm\}}"/>
+                    <GridViewColumn Header="Действия" Width="300">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Изменить" Margin="2" Padding="10,5" Click="EditPoll_Click" Tag="{Binding Id}"/>
-                                    <Button Content="Пройти тест" Margin="2" Padding="10,5" Click="RunPoll_Click" Tag="{Binding Id}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="90"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Кнопка "Изменить" -->
+                                    <Button Grid.Column="0" Content="Изменить" Margin="2" Padding="8,5" 
+                                            Click="EditPoll_Click" Tag="{Binding Id}" Width="84"/>
+                                    
+                                    <!-- Кнопка с текстом в зависимости от типа опроса, но фикс. ширины -->
+                                    <Button Grid.Column="1" Margin="2" Padding="8,5" 
+                                            Click="RunPoll_Click" Tag="{Binding Id}" Width="100">
+                                        <Button.Content>
+                                            <TextBlock>
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Пройти тест"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding PollType}" Value="Голосование">
+                                                                <Setter Property="Text" Value="Голосовать"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Button.Content>
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Background" Value="#e6f2ff"/>
@@ -42,7 +71,10 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    <Button Content="Удалить" Margin="2" Padding="10,5" Click="DeletePoll_Click" Tag="{Binding Id}">
+                                    
+                                    <!-- Кнопка "Удалить" -->
+                                    <Button Grid.Column="2" Content="Удалить" Margin="2" Padding="8,5" 
+                                            Click="DeletePoll_Click" Tag="{Binding Id}" Width="84">
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Background" Value="#ffcccc"/>
@@ -56,7 +88,7 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
@@ -64,7 +96,7 @@
             </ListView.View>
         </ListView>
 
-        <Button Grid.Row="2" Content="Закрыть" HorizontalAlignment="Right" Margin="0,15,0,0" Padding="15,5" Click="CloseButton_Click"/>
+        <Button Grid.Row="2" Content="Закрыть" HorizontalAlignment="Right" Margin="0,10,0,0" Padding="20,5" Click="CloseButton_Click"/>
     </Grid>
 </Window> 
  

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
+﻿using MySql.Data.MySqlClient;
 using Project_Vote.Models;
-using MySql.Data.MySqlClient;
-using System.IO;
-using System.Windows.Media;
+using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Project_Vote
 {
@@ -25,17 +24,17 @@ namespace Project_Vote
             {
                 // Преобразуем пароль в массив байтов
                 byte[] bytes = Encoding.UTF8.GetBytes(password);
-                
+
                 // Вычисляем хеш SHA-256
                 byte[] hash = sha256.ComputeHash(bytes);
-                
+
                 // Преобразуем массив байтов в строку в шестнадцатеричном формате
                 StringBuilder builder = new StringBuilder();
                 for (int i = 0; i < hash.Length; i++)
                 {
                     builder.Append(hash[i].ToString("x2"));
                 }
-                
+
                 return builder.ToString();
             }
         }
@@ -61,14 +60,14 @@ namespace Project_Vote
         private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
         {
             isPasswordVisible = !isPasswordVisible;
-            
+
             if (isPasswordVisible)
             {
                 // Показываем пароль
                 PasswordVisibleBox.Text = PasswordBox.Password;
                 PasswordBox.Visibility = Visibility.Collapsed;
                 PasswordVisibleBox.Visibility = Visibility.Visible;
-                
+
                 // Меняем иконку
                 TextBlock eyeIcon = TogglePasswordButton.Content as TextBlock;
                 if (eyeIcon != null)
@@ -83,7 +82,7 @@ namespace Project_Vote
                 PasswordBox.Password = PasswordVisibleBox.Text;
                 PasswordVisibleBox.Visibility = Visibility.Collapsed;
                 PasswordBox.Visibility = Visibility.Visible;
-                
+
                 // Возвращаем иконку
                 TextBlock eyeIcon = TogglePasswordButton.Content as TextBlock;
                 if (eyeIcon != null)
@@ -92,14 +91,14 @@ namespace Project_Vote
                     eyeIcon.Foreground = new SolidColorBrush(Color.FromArgb(204, 255, 255, 255)); // #CCFFFFFF
                 }
             }
-            
+
             // Фокусируем элемент ввода пароля
             if (isPasswordVisible)
                 PasswordVisibleBox.Focus();
             else
                 PasswordBox.Focus();
         }
-        
+
         // Синхронизация между видимым и скрытым полем пароля
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
@@ -108,7 +107,7 @@ namespace Project_Vote
                 PasswordVisibleBox.Text = PasswordBox.Password;
             }
         }
-        
+
         private void PasswordVisibleBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (isPasswordVisible)
@@ -158,7 +157,7 @@ namespace Project_Vote
 
             // Получаем пароль из активного поля
             string password = isPasswordVisible ? PasswordVisibleBox.Text : PasswordBox.Password;
-            
+
             if (string.IsNullOrWhiteSpace(password))
             {
                 ShowError(PasswordErrorText, "Пожалуйста, введите пароль");
@@ -177,7 +176,7 @@ namespace Project_Vote
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
                         conn.Open();
-                        
+
                         // Проверяем существование таблицы users
                         if (!CheckTableExists(conn))
                         {
@@ -187,7 +186,7 @@ namespace Project_Vote
 
                         // Хешируем пароль перед проверкой
                         string hashedPassword = HashPassword(password);
-                        
+
                         string query = "SELECT * FROM users WHERE email = @email AND password = @password";
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {

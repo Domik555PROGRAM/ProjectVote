@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Windows;
-using MySql.Data.MySqlClient;
 using System.Windows.Controls;
 
 namespace Project_Vote
-{   public class PollSummary
+{
+    public class PollSummary
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -13,14 +14,14 @@ namespace Project_Vote
         public string Description { get; set; }
         public string PollType { get; set; }
         public bool IsActive { get; set; }
-        public string Options { get; set; } 
+        public string Options { get; set; }
     }
     public partial class UserPollsWindow : Window
     {
         private string connectionString = "Server=localhost;Port=3306;Database=vopros;Uid=root";
-        
+
         private List<PollSummary> _userPolls;
-        
+
         public UserPollsWindow(List<PollSummary> userPolls)
         {
             InitializeComponent();
@@ -32,7 +33,7 @@ namespace Project_Vote
         {
             this.Close();
         }
-        
+
         private void EditPoll_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -44,7 +45,7 @@ namespace Project_Vote
                 MessageBox.Show("Не удалось найти выбранный опрос.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            
+
             try
             {
                 var editWindow = new Golos();
@@ -59,7 +60,7 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при открытии окна редактирования: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         private void DeletePoll_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -76,7 +77,7 @@ namespace Project_Vote
                 "Подтверждение удаления",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
-                
+
             if (result == MessageBoxResult.Yes)
             {
                 if (DeletePollFromDatabase(pollId))
@@ -91,7 +92,7 @@ namespace Project_Vote
                 }
             }
         }
-        
+
         private bool DeletePollFromDatabase(int pollId)
         {
             try
@@ -105,14 +106,14 @@ namespace Project_Vote
                     {
                         cmd.Parameters.AddWithValue("@id", pollId);
                         int rowsAffected = cmd.ExecuteNonQuery();
-                        
+
                         if (rowsAffected > 0)
                         {
                             return true;
                         }
                         else
                         {
-                            MessageBox.Show("Опрос не был удален. Возможно, он уже не существует в базе данных.", 
+                            MessageBox.Show("Опрос не был удален. Возможно, он уже не существует в базе данных.",
                                 "Ошибка удаления", MessageBoxButton.OK, MessageBoxImage.Warning);
                             return false;
                         }
@@ -125,7 +126,7 @@ namespace Project_Vote
                 return false;
             }
         }
-        
+
         private void RefreshPollsList()
         {
             try
@@ -134,12 +135,12 @@ namespace Project_Vote
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    
+
                     string query = "SELECT id, title, created_at, description, poll_type, is_active, options FROM polls WHERE user_id = @userId ORDER BY created_at DESC";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@userId", Project_Vote.Models.CurrentUser.UserId);
-                        
+
                         _userPolls.Clear();
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -171,16 +172,56 @@ namespace Project_Vote
         {
             var button = sender as Button;
             if (button?.Tag == null) return;
-            
+
             int pollId = (int)button.Tag;
             var pollToRun = _userPolls.Find(p => p.Id == pollId);
-            
+
             if (pollToRun == null)
             {
                 MessageBox.Show("Не удалось найти выбранный опрос.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            
+
+            // Сначала проверяем дату окончания опроса
+            DateTime endDate = DateTime.MaxValue;
+            string title = pollToRun.Title;
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string dateQuery = "SELECT end_date FROM polls WHERE id = @pollId";
+                    using (MySqlCommand cmd = new MySqlCommand(dateQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pollId", pollId);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            endDate = Convert.ToDateTime(result);
+                        }
+                    }
+                }
+
+                // Проверяем, активен ли опрос по дате окончания
+                if (!IsPollActive(endDate))
+                {
+                    MessageBox.Show(
+                        $"Срок действия опроса/теста \"{title}\" истек {endDate.ToShortDateString()}.\n\n" +
+                        "Данный опрос больше недоступен для прохождения.",
+                        "Срок опроса истек",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при проверке даты окончания опроса: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             // Проверяем тип опроса/теста
             if (pollToRun.PollType == "Тест с вопросами и вариантами ответов")
             {
@@ -188,7 +229,8 @@ namespace Project_Vote
                 {
                     // Проверяем, защищен ли тест паролем
                     bool hasPassword = false;
-                    
+                    string storedPassword = null;
+
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
                         conn.Open();
@@ -197,23 +239,27 @@ namespace Project_Vote
                         {
                             cmd.Parameters.AddWithValue("@pollId", pollId);
                             var result = cmd.ExecuteScalar();
-                            hasPassword = (result != null && result != DBNull.Value && !string.IsNullOrEmpty(result.ToString()));
+                            if (result != null && result != DBNull.Value && !string.IsNullOrEmpty(result.ToString()))
+                            {
+                                hasPassword = true;
+                                storedPassword = result.ToString();
+                            }
                         }
                     }
-                    
+
                     if (hasPassword)
                     {
                         // Создаем окно для ввода пароля
                         PasswordPromptWindow passwordWindow = new PasswordPromptWindow(pollToRun.Title);
-                        
+
                         if (passwordWindow.ShowDialog() == true)
                         {
                             string enteredPassword = passwordWindow.Password;
-                            
+
                             // Проверяем введенный пароль
                             if (!CheckTestPassword(pollId, enteredPassword))
                             {
-                                MessageBox.Show("Неверный пароль!", "Ошибка аутентификации", 
+                                MessageBox.Show("Неверный пароль!", "Ошибка аутентификации",
                                     MessageBoxButton.OK, MessageBoxImage.Error);
                                 return;
                             }
@@ -224,7 +270,7 @@ namespace Project_Vote
                             return;
                         }
                     }
-                    
+
                     var testWindow = new TestPassingWindow(pollToRun.Id, pollToRun.Title);
                     testWindow.Owner = this;
                     testWindow.ShowDialog();
@@ -234,10 +280,68 @@ namespace Project_Vote
                     MessageBox.Show($"Ошибка при открытии окна прохождения теста: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+            else if (pollToRun.PollType == "Голосование")
+            {
+                try
+                {
+                    // Проверяем, защищен ли опрос паролем
+                    bool hasPassword = false;
+                    string storedPassword = null;
+
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        string query = "SELECT password FROM polls WHERE id = @pollId";
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@pollId", pollId);
+                            var result = cmd.ExecuteScalar();
+                            if (result != null && result != DBNull.Value && !string.IsNullOrEmpty(result.ToString()))
+                            {
+                                hasPassword = true;
+                                storedPassword = result.ToString();
+                            }
+                        }
+                    }
+
+                    if (hasPassword)
+                    {
+                        // Создаем окно для ввода пароля
+                        PasswordPromptWindow passwordWindow = new PasswordPromptWindow(pollToRun.Title);
+
+                        if (passwordWindow.ShowDialog() == true)
+                        {
+                            string enteredPassword = passwordWindow.Password;
+
+                            // Проверяем введенный пароль
+                            if (!CheckTestPassword(pollId, enteredPassword))
+                            {
+                                MessageBox.Show("Неверный пароль!", "Ошибка аутентификации",
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            // Пользователь отменил ввод пароля
+                            return;
+                        }
+                    }
+
+                    // Открываем окно голосования
+                    var votingWindow = new TestGolosovania(pollToRun.Id);
+                    votingWindow.Owner = this;
+                    votingWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии окна голосования: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
             else
             {
                 // Для других типов опросов (будущая функциональность)
-                MessageBox.Show("Функция прохождения этого типа опроса находится в разработке.", 
+                MessageBox.Show("Функция прохождения этого типа опроса находится в разработке.",
                     "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -250,24 +354,24 @@ namespace Project_Vote
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    
+
                     string query = "SELECT password FROM polls WHERE id = @testId";
-                    
+
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@testId", testId);
-                        
+
                         object result = cmd.ExecuteScalar();
-                        
+
                         if (result == null || result == DBNull.Value)
                         {
                             // Если пароль в базе NULL, то тест не должен быть защищен
                             return true;
                         }
-                        
+
                         string storedPassword = result.ToString().Trim();
                         string inputPassword = password.Trim();
-                        
+
                         // Прямое сравнение паролей
                         return string.Equals(storedPassword, inputPassword, StringComparison.Ordinal);
                     }
@@ -275,11 +379,16 @@ namespace Project_Vote
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при проверке пароля: {ex.Message}", 
+                MessageBox.Show($"Ошибка при проверке пароля: {ex.Message}",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
+        private bool IsPollActive(DateTime endDate)
+        {
+            if (endDate.Year >= 9000)
+                return true;
+            return DateTime.Now.Date <= endDate.Date;
+        }
     }
 }
- 

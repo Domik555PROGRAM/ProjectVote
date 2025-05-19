@@ -5,8 +5,235 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Project_Vote"
         mc:Ignorable="d"
-        Title="TEST_Results" Height="450" Width="800">
-    <Grid>
-        
+        Title="Результаты тестов" Height="700" Width="1000"
+        WindowStartupLocation="CenterOwner"
+        Background="#f8f8f8">
+
+    <Window.Resources>
+        <Style TargetType="Button" x:Key="ActionButton">
+            <Setter Property="Background" Value="#4A90E2"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#357ABD"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#2A5D94"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Результаты прохождения тестов" 
+                   FontSize="24" FontWeight="Bold" Margin="0,0,0,15"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Левая панель: список тестов -->
+            <Border Grid.Column="0" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                    CornerRadius="5" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Ваши тесты" FontSize="18" 
+                               FontWeight="SemiBold" Margin="15,15,15,10"/>
+
+                    <ListView Grid.Row="1" x:Name="TestsListView" Margin="10,0,10,10" 
+                              BorderThickness="0" Background="Transparent"
+                              SelectionMode="Single" SelectionChanged="TestsListView_SelectionChanged">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="10" BorderThickness="0,0,0,1" BorderBrush="#eee">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontWeight="Medium" 
+                                                   FontSize="16" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat=dd.MM.yyyy}" 
+                                                   FontSize="12" Foreground="#777" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#f0f7ff" />
+                                        <Setter Property="BorderBrush" Value="#4A90E2" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#f5f5f5" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <!-- Правая панель: пользователи и результаты -->
+            <Grid Grid.Column="1" Margin="10,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Заголовок выбранного теста -->
+                <Border Grid.Row="0" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                        CornerRadius="5" Padding="15">
+                    <StackPanel>
+                        <TextBlock x:Name="SelectedTestTitle" Text="Выберите тест из списка" 
+                                  FontSize="18" FontWeight="Bold"/>
+                        <TextBlock x:Name="TestStatistics" Text="" 
+                                  FontSize="14" Margin="0,5,0,0" Foreground="#555"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Список пользователей, прошедших тест -->
+                <Border Grid.Row="1" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                        CornerRadius="5" Margin="0,10,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Пользователи, прошедшие тест" 
+                                   FontSize="16" FontWeight="SemiBold" Margin="15,15,15,10"/>
+
+                        <DataGrid Grid.Row="1" x:Name="UsersDataGrid" Margin="10" 
+                                 AutoGenerateColumns="False" IsReadOnly="True" 
+                                 SelectionMode="Single" SelectionChanged="UsersDataGrid_SelectionChanged"
+                                 BorderThickness="0" Background="Transparent"
+                                 HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Имя пользователя" Binding="{Binding UserName}" Width="*"/>
+                                <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat=dd.MM.yyyy}" Width="100"/>
+                                <DataGridTextColumn Header="Время" Binding="{Binding Time, StringFormat=HH:mm:ss}" Width="80"/>
+                                <DataGridTextColumn Header="Баллы" Binding="{Binding Score}" Width="80"/>
+                                <DataGridTextColumn Header="Процент" Binding="{Binding ScorePercent, StringFormat={}{0}%}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Заголовок для детальной информации о результате -->
+                <TextBlock Grid.Row="1" Text="Детальная информация о результате" 
+                          FontSize="16" FontWeight="SemiBold" Margin="10,201,20,11"/>
+
+                <!-- Детальная информация о результате -->
+                <Border Grid.Row="1" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                        CornerRadius="5" Margin="0,227,-32,10" Grid.RowSpan="3">
+                    <Grid Margin="15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Информация о выбранном результате -->
+                        <StackPanel Grid.Row="0" x:Name="ResultDetailsPanel" Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock x:Name="DetailUserName" FontWeight="SemiBold" FontSize="16"/>
+                                    <TextBlock x:Name="DetailDateTime" Foreground="#555" Margin="0,5,0,0"/>
+                                    <TextBlock x:Name="DetailScore" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    <TextBlock x:Name="DetailTimeSpent" Foreground="#555" Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <!-- Круговая диаграмма результата -->
+                                <Canvas Grid.Column="1" Width="100" Height="100" Margin="15,0,0,0">
+                                    <Ellipse Width="100" Height="100" Fill="#f0f0f0"/>
+                                    <Path x:Name="ResultArc" Fill="#4CAF50"/>
+                                    <Ellipse Width="70" Height="70" Canvas.Left="15" Canvas.Top="15" Fill="White"/>
+
+                                    <!-- Центрированный текст -->
+                                    <Grid Width="100" Height="100">
+                                        <TextBlock x:Name="PercentText"
+                   Text="0%" 
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Foreground="#333"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Canvas>
+
+                            </Grid>
+
+                            <TextBlock Text="Ответы на вопросы:" FontWeight="SemiBold" Margin="0,20,0,10"/>
+
+                            <!-- Список ответов -->
+                            <ListView x:Name="AnswersListView" BorderThickness="0" Background="Transparent" 
+          MaxHeight="200" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Ellipse Grid.Column="0" Width="12" Height="12" 
+                         Fill="{Binding StatusColor}" Margin="0,3,10,0"/>
+
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding QuestionText}" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding SelectedAnswer}" Foreground="#555" 
+                               Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+
+                        <!-- Сообщение, если результат не выбран -->
+                        <TextBlock Grid.Row="0" x:Name="NoSelectionText" 
+                                  Text="Выберите пользователя из списка, чтобы увидеть детальную информацию о результате" 
+                                  Foreground="#777" TextAlignment="Center" TextWrapping="Wrap"
+                                  VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,30"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

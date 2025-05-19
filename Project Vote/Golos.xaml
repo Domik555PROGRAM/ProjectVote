@@ -7,13 +7,14 @@
         mc:Ignorable="d"
         Title="Создание опроса" Height="900" Width="850" MinWidth="750" MinHeight="900"
         WindowStartupLocation="CenterScreen">
-    <!-- Ресурсы для градиента кнопок -->
     <Window.Resources>
+        <local:StringNotEmptyConverter x:Key="StringNotEmptyConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
         <LinearGradientBrush x:Key="ButtonGradientBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#4A90E2" Offset="0.0"/>
             <GradientStop Color="#357ABD" Offset="1.0"/>
         </LinearGradientBrush>
-        <!-- Стиль для кнопок -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -108,16 +109,29 @@
                 <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Тип опроса/теста</TextBlock>
                 <ComboBox x:Name="PollTypeComboBox" SelectedIndex="0" Margin="0,0,0,15" Padding="8,5" FontSize="14" 
                           SelectionChanged="PollTypeComboBox_SelectionChanged">
-                    <ComboBoxItem>Одиночный выбор (радиокнопки)</ComboBoxItem>
-                    <ComboBoxItem>Множественный выбор (флажки)</ComboBoxItem>
+                    <ComboBoxItem>Голосование</ComboBoxItem>
                     <ComboBoxItem>Тест с вопросами и вариантами ответов</ComboBoxItem>
                 </ComboBox>
                 
-                <!-- Панель для пароля (только для тестов) -->
-                <StackPanel x:Name="PasswordPanel" Visibility="Collapsed" Margin="0,0,0,15">
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Пароль для теста</TextBlock>
-                    
-                    <!-- Контейнер для поля пароля и кнопки просмотра -->
+                <!-- Дата окончания опроса/теста -->
+                <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Дата окончания опроса/теста</TextBlock>
+                <Grid Margin="0,0,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <DatePicker x:Name="EndDatePicker" SelectedDate="{Binding EndDate}"
+                                FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
+                    <CheckBox x:Name="NoLimitCheckBox" Grid.Column="1" Content="Без ограничения времени" 
+                              Margin="10,0,0,0" VerticalAlignment="Center" Checked="NoLimitCheckBox_Checked" 
+                              Unchecked="NoLimitCheckBox_Unchecked"/>
+                </Grid>
+                <TextBlock Text="Опрос/тест будет активен до конца выбранного дня или бессрочно при установке флажка" 
+                           Foreground="#666" FontSize="12" Margin="0,0,0,15"/>
+                
+                <!-- Панель для пароля (общая для всех типов опросов/тестов) -->
+                <StackPanel x:Name="PasswordPanel" Margin="0,0,0,15">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Пароль для доступа (необязательно)</TextBlock>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -140,27 +154,67 @@
                                  BorderThickness="1" Visibility="Collapsed" TextChanged="PasswordTextBox_TextChanged"/>
                     </Grid>
                     
-                    <TextBlock Text="Установите пароль для защиты теста. Его нужно будет ввести при прохождении теста." 
+                    <TextBlock Text="Установите пароль для защиты опроса/теста. Пароль потребуется ввести перед прохождением." 
                                Foreground="#666" FontSize="12" Margin="0,5,0,0"/>
                 </StackPanel>
                 
                 <!-- Варианты для обычного опроса -->
-                    <StackPanel>
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Варианты ответа</TextBlock>
-                    <ItemsControl ItemsSource="{Binding ElementName=OptionsListBox, Path=ItemsSource}">
+                <StackPanel x:Name="OptionsPanel">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Margin="0,0,0,5">Кандидаты</TextBlock>
+                    <ItemsControl x:Name="OptionsListBox" ItemsSource="{Binding ElementName=OptionsListBox, Path=ItemsSource}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
-                                    <Button Grid.Column="1" Content="X" Tag="{Binding}" Click="RemoveOption_Click"/>
-                                </Grid>
+                                <Border BorderBrush="#ccc" BorderThickness="1" Margin="0,5,0,10" Padding="15">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Имя кандидата -->
+                                        <TextBlock Text="Имя кандидата:" Grid.Row="0" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                        <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
+                                                 Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1" 
+                                                 Margin="0,0,0,10"/>
+                                        
+                                        <!-- Описание кандидата -->
+                                        <TextBlock Text="Описание:" Grid.Row="1" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                        <TextBox Text="{Binding ImageDescription, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                                 Padding="8,5" FontSize="14" BorderBrush="#ccc" BorderThickness="1" 
+                                                 Margin="0,0,0,10" TextWrapping="Wrap" MinHeight="60"/>
+                                        
+                                        <!-- Кнопки для загрузки/удаления изображения -->
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                            <Button Content="Загрузить фото" Margin="0,0,10,0" 
+                                                    Tag="{Binding}" Click="UploadOptionImage_Click"
+                                                    IsEnabled="{Binding Text, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                            <Button Content="Удалить фото" Margin="0,0,10,0" 
+                                                    Tag="{Binding}" Click="RemoveOptionImage_Click"
+                                                    IsEnabled="{Binding HasImage}"/>
+                                            <Button Content="Удалить кандидата" Background="#FF4040" Foreground="White" 
+                                                    Tag="{Binding}" Click="RemoveOption_Click"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Отображение изображения -->
+                                        <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
+                                                BorderBrush="#ccc" BorderThickness="1" MinHeight="150" MaxHeight="200" 
+                                                Margin="0,10,0,0" Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Image Source="{Binding OptionImageSource}" Stretch="Uniform" Margin="5"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <Button x:Name="AddOptionButton" Content="Добавить кандидата" HorizontalAlignment="Left" Click="AddOption_Click" Margin="0,10,0,0"/>
                 </StackPanel>
                 <!-- Панель для теста с вопросами -->
                 <StackPanel x:Name="QuestionsPanel" Visibility="Collapsed">
@@ -170,7 +224,15 @@
                                 <DataTemplate>
                                 <Border BorderBrush="#ccc" BorderThickness="1" Margin="0,10" Padding="15">
                                         <StackPanel>
-                                        <TextBlock Text="Вопрос:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Вопрос:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                            <Button Grid.Column="1" Content="Удалить вопрос" Tag="{Binding}" Click="RemoveQuestion_Click" 
+                                                    Background="#FF4040" Foreground="White" Margin="0,0,0,5"/>
+                                        </Grid>
                                         <TextBox Text="{Binding QuestionText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" 
                                                  Margin="0,0,0,10" FontSize="14" BorderBrush="#ccc" BorderThickness="1"/>
                                         
@@ -191,7 +253,8 @@
                                                     
                                                     <StackPanel Grid.Column="1" Margin="10,0,0,0">
                                                         <Button Content="Загрузить" Margin="0,0,0,5" 
-                                                                Tag="{Binding}" Click="UploadQuestionImage_Click"/>
+                                                                Tag="{Binding}" Click="UploadQuestionImage_Click"
+                                                                IsEnabled="{Binding QuestionText, Converter={StaticResource StringNotEmptyConverter}}"/>
                                                         <Button Content="Удалить" Margin="0,0,0,5" 
                                                                 Tag="{Binding}" Click="RemoveQuestionImage_Click"/>
                                                     </StackPanel>
@@ -235,7 +298,8 @@
                                                                     
                                                                     <StackPanel Grid.Column="1" Margin="10,0,0,0">
                                                                         <Button Content="Загрузить" Margin="0,0,0,5" 
-                                                                                Tag="{Binding}" Click="UploadOptionImage_Click"/>
+                                                                                Tag="{Binding}" Click="UploadOptionImage_Click"
+                                                                                IsEnabled="{Binding Text, Converter={StaticResource StringNotEmptyConverter}}"/>
                                                                         <Button Content="Удалить" Margin="0,0,0,5" 
                                                                                 Tag="{Binding}" Click="RemoveOptionImage_Click"/>
                                                                     </StackPanel>

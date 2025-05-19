@@ -1,9 +1,14 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using MySql.Data.MySqlClient;
+using Project_Vote.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -11,17 +16,27 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using MySql.Data.MySqlClient;
-using System.Runtime.InteropServices;
-using Project_Vote.Models;
-using Microsoft.Win32;
-using System.IO;
-using System.Security.Cryptography;
 
 namespace Project_Vote
 {
-    
+    // Конвертер для проверки строки на пустоту
+    public class StringNotEmptyConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string str)
+            {
+                return !string.IsNullOrWhiteSpace(str);
+            }
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public partial class Golos : Window
     {
         private Dictionary<Type, Window> _openWindows = new Dictionary<Type, Window>();
@@ -78,7 +93,7 @@ namespace Project_Vote
         private ObservableCollection<Question> _questions = new ObservableCollection<Question>();
         private int _editingPollId = -1;
         private bool _isEditingMode = false;
-        
+
         public class PollOption
         {
             public string Text { get; set; }
@@ -87,8 +102,40 @@ namespace Project_Vote
             public string ImageDescription { get; set; }
             public bool HasImage => ImageData != null && ImageData.Length > 0;
             public BitmapImage OptionImageSource { get; set; }
+
+            // Метод для обновления OptionImageSource из ImageData
+            public void UpdateImageSource()
+            {
+                if (ImageData != null && ImageData.Length > 0)
+                {
+                    try
+                    {
+                        // Создаем BitmapImage для отображения
+                        using (MemoryStream ms = new MemoryStream(ImageData))
+                        {
+                            BitmapImage bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.StreamSource = ms;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+
+                            OptionImageSource = bitmap;
+                        }
+                    }
+                    catch
+                    {
+                        // Игнорируем ошибки при создании изображения
+                        OptionImageSource = null;
+                    }
+                }
+                else
+                {
+                    OptionImageSource = null;
+                }
+            }
         }
-        
+
         public class Poll
         {
             private List<string> _options;
@@ -101,6 +148,7 @@ namespace Project_Vote
                 Language = "Русский";
                 PollType = "Одиночный выбор (радиокнопки)";
                 CreatedAt = DateTime.Now;
+                EndDate = DateTime.Now.AddDays(7); // По умолчанию опрос активен 7 дней
                 IsActive = true;
             }
 
@@ -108,15 +156,16 @@ namespace Project_Vote
             public string Description { get; set; }
             public string Language { get; set; }
             public string PollType { get; set; }
-            public List<string> Options 
-            { 
-                get { return _options; } 
+            public List<string> Options
+            {
+                get { return _options; }
                 set { _options = value ?? new List<string>(); }
             }
             public DateTime CreatedAt { get; set; }
+            public DateTime EndDate { get; set; } // Дата окончания опроса/теста
             public bool IsActive { get; set; }
         }
-        
+
         public Golos()
         {
             _currentPoll = new Poll();
@@ -126,12 +175,19 @@ namespace Project_Vote
                 new PollOption { Text = "Вариант 2" },
                 new PollOption { Text = "Вариант 3" }
             };
+
             InitializeComponent();
+
+            // Устанавливаем дату окончания по умолчанию (текущая дата + 7 дней)
+            EndDatePicker.SelectedDate = DateTime.Now.AddDays(7);
+
             DataContext = _currentPoll;
+            OptionsListBox.ItemsSource = _pollOptions;
+
             InitializeRichTextBox();
             QuestionsItemsControl.ItemsSource = _questions;
         }
-        
+
         private void InitializeRichTextBox()
         {
             Paragraph paragraph = new Paragraph();
@@ -150,7 +206,7 @@ namespace Project_Vote
                 e.CancelCommand();
             }
         }
-        
+
 
         private void InsertFormattedText(TextPointer position, string text)
         {
@@ -165,8 +221,8 @@ namespace Project_Vote
             TextPointer newPosition = run.ContentEnd;
             DescriptionRichTextBox.Selection.Select(newPosition, newPosition);
         }
-        
-       
+
+
         private void BoldButton_Click(object sender, RoutedEventArgs e)
         {
             _isBoldActive = !_isBoldActive;
@@ -182,7 +238,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-        
+
         private void ItalicButton_Click(object sender, RoutedEventArgs e)
         {
             _isItalicActive = !_isItalicActive;
@@ -191,7 +247,7 @@ namespace Project_Vote
                 TextRange selection = new TextRange(
                     DescriptionRichTextBox.Selection.Start,
                     DescriptionRichTextBox.Selection.End);
-                
+
                 if (_isItalicActive)
                     selection.ApplyPropertyValue(TextElement.FontStyleProperty, FontStyles.Italic);
                 else
@@ -199,7 +255,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-        
+
         private void UnderlineButton_Click(object sender, RoutedEventArgs e)
         {
             _isUnderlineActive = !_isUnderlineActive;
@@ -208,7 +264,7 @@ namespace Project_Vote
                 TextRange selection = new TextRange(
                     DescriptionRichTextBox.Selection.Start,
                     DescriptionRichTextBox.Selection.End);
-                
+
                 if (_isUnderlineActive)
                     selection.ApplyPropertyValue(Inline.TextDecorationsProperty, TextDecorations.Underline);
                 else
@@ -216,7 +272,7 @@ namespace Project_Vote
             }
             DescriptionRichTextBox.Focus();
         }
-        
+
 
         private void DescriptionRichTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -275,7 +331,7 @@ namespace Project_Vote
 
             return null;
         }
-        
+
 
         private bool IsModifierKey(Key key)
         {
@@ -285,7 +341,7 @@ namespace Project_Vote
                    key == Key.LWin || key == Key.RWin ||
                    key == Key.CapsLock;
         }
-        
+
 
         private bool IsControlKey(Key key)
         {
@@ -297,11 +353,10 @@ namespace Project_Vote
                    key == Key.Insert || key == Key.Escape ||
                    key == Key.Enter;
         }
-        
 
         private void DescriptionRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_currentPoll == null) 
+            if (_currentPoll == null)
             {
                 _currentPoll = new Poll();
                 DataContext = _currentPoll;
@@ -313,11 +368,11 @@ namespace Project_Vote
 
             _currentPoll.Description = textRange.Text?.Trim() ?? string.Empty;
         }
-        
+
         private void TitleTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
 
-            if (_currentPoll == null) 
+            if (_currentPoll == null)
             {
                 _currentPoll = new Poll();
                 DataContext = _currentPoll;
@@ -326,10 +381,10 @@ namespace Project_Vote
             if (TitleTextBox == null) return;
 
             int length = TitleTextBox.Text?.Length ?? 0;
-            
+
             if (TitleCharCountText != null)
                 TitleCharCountText.Text = $"{length}/200";
-            
+
             if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
             {
                 if (TitleErrorText != null)
@@ -339,51 +394,142 @@ namespace Project_Vote
             {
                 if (TitleErrorText != null)
                     TitleErrorText.Visibility = Visibility.Collapsed;
-                
+
                 _currentPoll.Title = TitleTextBox.Text;
             }
         }
-        
+
         private void PollTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
-            if (QuestionsPanel == null)
+            if (QuestionsPanel == null || OptionsPanel == null)
             {
                 return;
             }
 
-            if (PollTypeComboBox.SelectedIndex == 2)
+            // Получаем выбранный тип опроса
+            string selectedType = ((ComboBoxItem)PollTypeComboBox.SelectedItem)?.Content?.ToString() ?? "";
+
+            // Скрываем все панели по умолчанию
+            QuestionsPanel.Visibility = Visibility.Collapsed;
+            OptionsPanel.Visibility = Visibility.Collapsed;
+
+            // Находим TextBlock с заголовком вариантов
+            var titleBlock = OptionsPanel.Children[0] as TextBlock;
+            // Находим кнопку добавления вариантов
+            var addButton = AddOptionButton;
+
+            // Настраиваем интерфейс в зависимости от выбранного типа опроса
+            switch (selectedType)
             {
-                QuestionsPanel.Visibility = Visibility.Visible;
-                PasswordPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                QuestionsPanel.Visibility = Visibility.Collapsed;
-                PasswordPanel.Visibility = Visibility.Collapsed;
+                case "Тест с вопросами и вариантами ответов":
+                    QuestionsPanel.Visibility = Visibility.Visible;
+                    break;
+
+                case "Голосование":
+                    OptionsPanel.Visibility = Visibility.Visible;
+
+                    if (titleBlock != null)
+                        titleBlock.Text = "Кандидаты для голосования";
+
+                    // Изменяем текст на кнопке добавления
+                    if (addButton != null)
+                        addButton.Content = "Добавить кандидата";
+                    break;
+
+                default: // Одиночный выбор или Множественный выбор
+                    OptionsPanel.Visibility = Visibility.Visible;
+                    // Возвращаем исходный текст
+                    if (titleBlock != null)
+                        titleBlock.Text = "Варианты ответа";
+
+                    // Возвращаем исходный текст на кнопке
+                    if (addButton != null)
+                        addButton.Content = "Добавить вариант";
+                    break;
             }
         }
-        
+
         private void AddQuestion_Click(object sender, RoutedEventArgs e)
         {
             _questions.Add(new Question());
         }
-        
+
         private void AddOption_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            var question = button.DataContext as Question;
-            question?.Options.Add(new PollOption());
+
+            // Проверяем, является ли кнопка частью вопроса
+            var question = button?.DataContext as Question;
+
+            if (question != null)
+            {
+                // Кнопка добавления вариантов ответа для вопроса
+                question.Options.Add(new PollOption { Text = "Новый вариант ответа" });
+            }
+            else
+            {
+                // Кнопка добавления кандидата или варианта для обычного опроса
+                if (_pollOptions == null)
+                {
+                    _pollOptions = new ObservableCollection<PollOption>();
+                }
+
+                // Определяем тип опроса
+                string selectedType = ((ComboBoxItem)PollTypeComboBox.SelectedItem)?.Content?.ToString() ?? "";
+
+                // Создаем новый вариант/кандидата в зависимости от типа опроса
+                string defaultText = (selectedType == "Голосование") ? "Новый кандидат" : "Новый вариант ответа";
+                var newOption = new PollOption { Text = defaultText };
+                _pollOptions.Add(newOption);
+
+                // Настраиваем список для отображения
+                if (OptionsListBox != null && OptionsListBox.ItemsSource == null)
+                {
+                    OptionsListBox.ItemsSource = _pollOptions;
+                }
+            }
         }
-        
+
         private void RemoveOption_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            var option = button.Tag as PollOption;
+            var option = button?.Tag as PollOption;
+
+            if (option == null)
+                return;
+
+            // Проверяем, является ли вариант частью вопроса или основного списка
             var question = _questions.FirstOrDefault(q => q.Options.Contains(option));
-            question?.Options.Remove(option);
+
+            if (question != null)
+            {
+                // Удаляем из вопроса
+                question.Options.Remove(option);
+            }
+            else if (_pollOptions != null && _pollOptions.Contains(option))
+            {
+                // Удаляем из основного списка вариантов
+                _pollOptions.Remove(option);
+            }
         }
-        
+
+        private void RemoveQuestion_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var question = button.Tag as Question;
+
+            if (question == null)
+                return;
+
+            if (MessageBox.Show("Вы действительно хотите удалить этот вопрос?",
+                               "Подтверждение удаления",
+                               MessageBoxButton.YesNo,
+                               MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                _questions.Remove(question);
+            }
+        }
+
         private bool CreatePollTableIfNotExists(MySqlConnection connection)
         {
             try
@@ -403,10 +549,11 @@ namespace Project_Vote
                                 description TEXT,
                                 poll_type VARCHAR(50),
                                 created_at DATETIME,
+                                end_date DATETIME,           -- Дата окончания опроса/теста
                                 is_active BOOLEAN,
                                 options TEXT,
-                                password VARCHAR(255) NULL,  -- Добавляем поле для пароля
-                                -- УДАЛЕНА СТРОКА: FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+                                password VARCHAR(255) NULL,  -- Пароль для доступа к опросу/тесту
+                                created_by VARCHAR(100) NULL -- Имя создателя опроса
                             )";
                         using (MySqlCommand createCmd = new MySqlCommand(createTableQuery, connection))
                         {
@@ -415,9 +562,28 @@ namespace Project_Vote
                     }
                     else
                     {
+                        // Проверяем наличие столбца end_date
+                        string checkEndDateColumnQuery = "SHOW COLUMNS FROM polls LIKE 'end_date'";
+                        using (MySqlCommand checkColCmd = new MySqlCommand(checkEndDateColumnQuery, connection))
+                        {
+                            object colResult = checkColCmd.ExecuteScalar();
+                            if (colResult == null)
+                            {
+                                // Добавляем столбец end_date
+                                string addColumnQuery = @"
+                                    ALTER TABLE polls
+                                    ADD COLUMN end_date DATETIME NULL";
+
+                                using (MySqlCommand addColCmd = new MySqlCommand(addColumnQuery, connection))
+                                {
+                                    addColCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
                         // Проверяем наличие столбца password
-                        string checkColumnQuery = "SHOW COLUMNS FROM polls LIKE 'password'";
-                        using (MySqlCommand checkColCmd = new MySqlCommand(checkColumnQuery, connection))
+                        string checkPasswordColumnQuery = "SHOW COLUMNS FROM polls LIKE 'password'";
+                        using (MySqlCommand checkColCmd = new MySqlCommand(checkPasswordColumnQuery, connection))
                         {
                             object colResult = checkColCmd.ExecuteScalar();
                             if (colResult == null)
@@ -433,7 +599,7 @@ namespace Project_Vote
                                 }
                             }
                         }
-                        
+
                         string checkUserIdColumnQuery = "SHOW COLUMNS FROM polls LIKE 'user_id'";
                         using (MySqlCommand checkColCmd = new MySqlCommand(checkUserIdColumnQuery, connection))
                         {
@@ -451,6 +617,25 @@ namespace Project_Vote
                                 }
                             }
                         }
+
+                        // Проверяем наличие столбца created_by
+                        string checkCreatedByColumnQuery = "SHOW COLUMNS FROM polls LIKE 'created_by'";
+                        using (MySqlCommand checkColCmd = new MySqlCommand(checkCreatedByColumnQuery, connection))
+                        {
+                            object colResult = checkColCmd.ExecuteScalar();
+                            if (colResult == null)
+                            {
+                                // Добавляем столбец created_by
+                                string addColumnQuery = @"
+                                    ALTER TABLE polls
+                                    ADD COLUMN created_by VARCHAR(100) NULL";
+
+                                using (MySqlCommand addColCmd = new MySqlCommand(addColumnQuery, connection))
+                                {
+                                    addColCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
                     }
                 }
                 return true;
@@ -458,7 +643,7 @@ namespace Project_Vote
             catch (Exception ex)
             {
 
-                MessageBox.Show($"Ошибка при проверке/создании таблицы polls или столбца user_id: {ex.Message}", "Ошибка базы данных", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при проверке/создании таблицы polls или столбцов: {ex.Message}", "Ошибка базы данных", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -520,6 +705,8 @@ namespace Project_Vote
                     }
 
                     string insertQuery = "INSERT INTO polls (user_id, title, description, poll_type, created_at, is_active, options, password) VALUES (@user_id, @title, @description, @poll_type, @created_at, @is_active, @options, @password)";
+                    int pollId;
+
                     using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@user_id", CurrentUser.UserId);
@@ -529,7 +716,7 @@ namespace Project_Vote
                         cmd.Parameters.AddWithValue("@created_at", _currentPoll.CreatedAt);
                         cmd.Parameters.AddWithValue("@is_active", _currentPoll.IsActive);
                         cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
-                        
+
                         string password = PasswordBox.Password;
                         if (!string.IsNullOrEmpty(password))
                         {
@@ -541,19 +728,76 @@ namespace Project_Vote
                         }
 
                         cmd.ExecuteNonQuery();
+                        pollId = (int)cmd.LastInsertedId;
+                    }
 
-                        // Проверяем сохраненный пароль
-                        string checkQuery = "SELECT password FROM polls WHERE title = @title ORDER BY id DESC LIMIT 1";
-                        using (var checkCmd = new MySqlCommand(checkQuery, conn))
+                    // Если тип опроса - голосование, сохраняем изображения кандидатов
+                    if (_currentPoll.PollType == "Голосование" && _pollOptions != null && _pollOptions.Count > 0)
+                    {
+                        // Проверяем и создаем таблицу для хранения изображений кандидатов
+                        string checkTableQuery = "SHOW TABLES LIKE 'candidate_images'";
+                        using (MySqlCommand cmd = new MySqlCommand(checkTableQuery, conn))
                         {
-                            checkCmd.Parameters.AddWithValue("@title", _currentPoll.Title);
-                            var savedPassword = checkCmd.ExecuteScalar();
-                            MessageBox.Show($"Проверка сохраненного пароля:\nСохраненный пароль в базе: {savedPassword}", 
-                                "Проверка сохранения", MessageBoxButton.OK, MessageBoxImage.Information);
+                            object result = cmd.ExecuteScalar();
+                            if (result == null)
+                            {
+                                string createTableQuery = @"
+                                    CREATE TABLE IF NOT EXISTS `candidate_images` (
+                                      `id` INT NOT NULL AUTO_INCREMENT,
+                                      `poll_id` INT NOT NULL,
+                                      `candidate_name` VARCHAR(255) NOT NULL,
+                                      `image_data` LONGBLOB NULL,
+                                      `description` TEXT NULL,
+                                      PRIMARY KEY (`id`),
+                                      INDEX `idx_poll_id` (`poll_id` ASC)
+                                    )";
+                                using (MySqlCommand createCmd = new MySqlCommand(createTableQuery, conn))
+                                {
+                                    createCmd.ExecuteNonQuery();
+                                }
+                            }
                         }
 
-                        return true;
+                        // Сохраняем изображения кандидатов
+                        foreach (var option in _pollOptions)
+                        {
+                            if (option.ImageData != null && option.ImageData.Length > 0)
+                            {
+                                string insertImageQuery = @"
+                                    INSERT INTO candidate_images 
+                                    (poll_id, candidate_name, image_data, description) 
+                                    VALUES 
+                                    (@poll_id, @candidate_name, @image_data, @description)";
+
+                                using (MySqlCommand cmd = new MySqlCommand(insertImageQuery, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@poll_id", pollId);
+                                    cmd.Parameters.AddWithValue("@candidate_name", option.Text);
+                                    cmd.Parameters.AddWithValue("@image_data", option.ImageData);
+                                    cmd.Parameters.AddWithValue("@description", option.ImageDescription ?? string.Empty);
+
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
                     }
+
+                    // Проверяем сохраненный опрос
+                    string checkQuery = "SELECT id, title, poll_type FROM polls WHERE id = @id";
+                    using (var checkCmd = new MySqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@id", pollId);
+                        using (var reader = checkCmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                MessageBox.Show($"Голосование успешно сохранено:\nID: {reader["id"]}\nНазвание: {reader["title"]}\nТип: {reader["poll_type"]}",
+                                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                        }
+                    }
+
+                    return true;
                 }
             }
             catch (Exception ex)
@@ -610,7 +854,7 @@ namespace Project_Vote
                         cmd.Parameters.AddWithValue("@description", _currentPoll.Description);
                         cmd.Parameters.AddWithValue("@poll_type", _currentPoll.PollType);
                         cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
-                        
+
                         string password = PasswordBox.Password;
                         if (!string.IsNullOrEmpty(password))
                         {
@@ -644,7 +888,8 @@ namespace Project_Vote
                 return;
             }
 
-            if (CheckIfPollTitleExists(pollTitle))
+            // Проверка уникальности заголовка только для новых опросов, но не при редактировании
+            if (!_isEditingMode && CheckIfPollTitleExists(pollTitle))
             {
                 MessageBox.Show($"Опрос или тест с заголовком \"{pollTitle}\" уже существует. Пожалуйста, введите другой заголовок.",
                                 "Заголовок уже используется", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -652,7 +897,24 @@ namespace Project_Vote
                 TitleTextBox.SelectAll();
                 return;
             }
-            
+
+            // Проверка даты окончания
+            if (EndDatePicker.SelectedDate == null)
+            {
+                MessageBox.Show("Пожалуйста, выберите дату окончания опроса/теста.",
+                               "Дата не выбрана", MessageBoxButton.OK, MessageBoxImage.Warning);
+                EndDatePicker.Focus();
+                return;
+            }
+
+            if (EndDatePicker.SelectedDate < DateTime.Today)
+            {
+                MessageBox.Show("Дата окончания опроса/теста не может быть раньше сегодняшнего дня.",
+                               "Неверная дата", MessageBoxButton.OK, MessageBoxImage.Warning);
+                EndDatePicker.Focus();
+                return;
+            }
+
             if (_currentPoll == null)
             {
                 _currentPoll = new Poll();
@@ -674,35 +936,35 @@ namespace Project_Vote
 
             if (_currentPoll.PollType == "Тест с вопросами и вариантами ответов")
             {
-                 if (_currentPoll.Options == null)
-                     _currentPoll.Options = new List<string>();
-                 else
-                     _currentPoll.Options.Clear();
-                
+                if (_currentPoll.Options == null)
+                    _currentPoll.Options = new List<string>();
+                else
+                    _currentPoll.Options.Clear();
+
                 if (_questions != null && _questions.Count > 0)
                 {
                     foreach (var question in _questions)
                     {
                         if (string.IsNullOrWhiteSpace(question.QuestionText))
                             continue;
-                            
+
                         string questionData = "Q:" + question.QuestionText;
-                        
+
                         if (question.Options != null && question.Options.Count > 0)
                         {
                             foreach (var option in question.Options)
                             {
                                 if (string.IsNullOrWhiteSpace(option.Text))
                                     continue;
-                                    
+
                                 questionData += $"|||O:{option.Text}:{(option.IsCorrect ? "1" : "0")}";
                             }
                         }
-                        
+
                         _currentPoll.Options.Add(questionData);
                     }
                 }
-                
+
                 if (!_currentPoll.Options.Any())
                 {
                     MessageBox.Show("Нельзя сохранить тест без вопросов.", "Нет вопросов", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -730,6 +992,7 @@ namespace Project_Vote
                 }
             }
             _currentPoll.CreatedAt = DateTime.Now;
+            _currentPoll.EndDate = EndDatePicker.SelectedDate.Value; // Сохраняем дату окончания
             _currentPoll.IsActive = true;
 
             try
@@ -737,110 +1000,169 @@ namespace Project_Vote
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    
+
                     // Создаем таблицу polls, если она не существует
                     if (!CreatePollTableIfNotExists(conn))
                     {
                         return;
                     }
-                    
+
                     int pollId;
                     string password = PasswordBox.Password;
-                    string hashedPassword = null;
-                    
-                    if (!string.IsNullOrEmpty(password))
+
+                    // Начинаем транзакцию для обеспечения целостности данных
+                    MySqlTransaction transaction = conn.BeginTransaction();
+
+                    try
                     {
-                        hashedPassword = password; // Сохраняем пароль как есть, без хеширования
-                    }
-                    
-                    // Сохраняем или обновляем основную информацию об опросе
-                    if (_isEditingMode && _editingPollId > 0)
-                    {
-                        string updateQuery = @"
+                        // Сохраняем или обновляем основную информацию об опросе
+                        if (_isEditingMode && _editingPollId > 0)
+                        {
+                            string updateQuery = @"
                             UPDATE polls 
                             SET title = @title, 
                                 description = @description, 
                                 poll_type = @poll_type, 
                                 options = @options,
                                 created_by = @created_by,
-                                password = @password
+                                password = @password,
+                                end_date = @end_date
                             WHERE id = @id";
-                            
-                        using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@id", _editingPollId);
-                            cmd.Parameters.AddWithValue("@title", _currentPoll.Title);
-                            cmd.Parameters.AddWithValue("@description", _currentPoll.Description);
-                            cmd.Parameters.AddWithValue("@poll_type", _currentPoll.PollType);
-                            cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
-                            cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
-                            cmd.Parameters.AddWithValue("@password", hashedPassword ?? (object)DBNull.Value);
-                            
-                            cmd.ExecuteNonQuery();
-                            pollId = _editingPollId;
-                            
-                            // Отладочное сообщение
-                            MessageBox.Show($"Обновление опроса ID: {pollId}\nПароль: {hashedPassword ?? "NULL"}", 
-                                           "Отладка сохранения пароля", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                            using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@id", _editingPollId);
+                                cmd.Parameters.AddWithValue("@title", _currentPoll.Title);
+                                cmd.Parameters.AddWithValue("@description", _currentPoll.Description);
+                                cmd.Parameters.AddWithValue("@poll_type", _currentPoll.PollType);
+                                cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
+                                cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
+                                cmd.Parameters.AddWithValue("@password", !string.IsNullOrEmpty(password) ? password : (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@end_date", _currentPoll.EndDate);
+
+                                cmd.ExecuteNonQuery();
+                                pollId = _editingPollId;
+                            }
+
+                            // При редактировании и если это голосование, обновляем изображения кандидатов
+                            if (_currentPoll.PollType == "Голосование" && _pollOptions != null && _pollOptions.Count > 0)
+                            {
+                                // Удаляем старые изображения
+                                string deleteImagesQuery = "DELETE FROM candidate_images WHERE poll_id = @pollId";
+                                using (MySqlCommand cmd = new MySqlCommand(deleteImagesQuery, conn, transaction))
+                                {
+                                    cmd.Parameters.AddWithValue("@pollId", pollId);
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                // Добавляем новые изображения
+                                foreach (var option in _pollOptions)
+                                {
+                                    if (option.ImageData != null && option.ImageData.Length > 0)
+                                    {
+                                        string insertImageQuery = @"
+                                        INSERT INTO candidate_images 
+                                        (poll_id, candidate_name, image_data, description) 
+                                        VALUES 
+                                        (@poll_id, @candidate_name, @image_data, @description)";
+
+                                        using (MySqlCommand cmd = new MySqlCommand(insertImageQuery, conn, transaction))
+                                        {
+                                            cmd.Parameters.AddWithValue("@poll_id", pollId);
+                                            cmd.Parameters.AddWithValue("@candidate_name", option.Text);
+                                            cmd.Parameters.AddWithValue("@image_data", option.ImageData);
+                                            cmd.Parameters.AddWithValue("@description", option.ImageDescription ?? string.Empty);
+
+                                            cmd.ExecuteNonQuery();
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
-                    else
-                    {
-                        string insertQuery = @"
+                        else
+                        {
+                            string insertQuery = @"
                             INSERT INTO polls 
-                            (user_id, title, description, poll_type, created_at, is_active, options, created_by, password) 
+                            (user_id, title, description, poll_type, created_at, is_active, options, created_by, password, end_date) 
                             VALUES 
-                            (@user_id, @title, @description, @poll_type, @created_at, @is_active, @options, @created_by, @password)";
-                            
-                        using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@user_id", CurrentUser.UserId);
-                            cmd.Parameters.AddWithValue("@title", _currentPoll.Title);
-                            cmd.Parameters.AddWithValue("@description", _currentPoll.Description);
-                            cmd.Parameters.AddWithValue("@poll_type", _currentPoll.PollType);
-                            cmd.Parameters.AddWithValue("@created_at", _currentPoll.CreatedAt);
-                            cmd.Parameters.AddWithValue("@is_active", _currentPoll.IsActive);
-                            cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
-                            cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
-                            cmd.Parameters.AddWithValue("@password", hashedPassword ?? (object)DBNull.Value);
-                            
-                            cmd.ExecuteNonQuery();
-                            pollId = (int)cmd.LastInsertedId;
-                            
-                            // Отладочное сообщение
-                            MessageBox.Show($"Создание нового опроса ID: {pollId}\nПароль: {hashedPassword ?? "NULL"}", 
-                                           "Отладка сохранения пароля", MessageBoxButton.OK, MessageBoxImage.Information);
+                            (@user_id, @title, @description, @poll_type, @created_at, @is_active, @options, @created_by, @password, @end_date)";
+
+                            using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@user_id", CurrentUser.UserId);
+                                cmd.Parameters.AddWithValue("@title", _currentPoll.Title);
+                                cmd.Parameters.AddWithValue("@description", _currentPoll.Description);
+                                cmd.Parameters.AddWithValue("@poll_type", _currentPoll.PollType);
+                                cmd.Parameters.AddWithValue("@created_at", _currentPoll.CreatedAt);
+                                cmd.Parameters.AddWithValue("@is_active", _currentPoll.IsActive);
+                                cmd.Parameters.AddWithValue("@options", _currentPoll.Options != null ? string.Join("|||", _currentPoll.Options) : string.Empty);
+                                cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
+                                cmd.Parameters.AddWithValue("@password", !string.IsNullOrEmpty(password) ? password : (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@end_date", _currentPoll.EndDate);
+
+                                cmd.ExecuteNonQuery();
+                                pollId = (int)cmd.LastInsertedId;
+                            }
+
+                            // Если тип опроса - голосование, сохраняем изображения кандидатов
+                            if (_currentPoll.PollType == "Голосование" && _pollOptions != null && _pollOptions.Count > 0)
+                            {
+                                // Проверяем и создаем таблицу для хранения изображений кандидатов, если необходимо
+                                CreateCandidateImagesTableIfNotExists(conn);
+
+                                // Сохраняем изображения кандидатов
+                                foreach (var option in _pollOptions)
+                                {
+                                    if (option.ImageData != null && option.ImageData.Length > 0)
+                                    {
+                                        string insertImageQuery = @"
+                                        INSERT INTO candidate_images 
+                                        (poll_id, candidate_name, image_data, description) 
+                                        VALUES 
+                                        (@poll_id, @candidate_name, @image_data, @description)";
+
+                                        using (MySqlCommand cmd = new MySqlCommand(insertImageQuery, conn, transaction))
+                                        {
+                                            cmd.Parameters.AddWithValue("@poll_id", pollId);
+                                            cmd.Parameters.AddWithValue("@candidate_name", option.Text);
+                                            cmd.Parameters.AddWithValue("@image_data", option.ImageData);
+                                            cmd.Parameters.AddWithValue("@description", option.ImageDescription ?? string.Empty);
+
+                                            cmd.ExecuteNonQuery();
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
-                    
-                    // Если это тест с вопросами, сохраняем вопросы и варианты ответов с изображениями
-                    if (_currentPoll.PollType == "Тест с вопросами и вариантами ответов")
-                    {
-                        if (!SaveQuestionsAndOptions(pollId, conn))
+
+                        // Если это тест с вопросами, сохраняем вопросы и варианты ответов с изображениями
+                        if (_currentPoll.PollType == "Тест с вопросами и вариантами ответов")
                         {
-                            MessageBox.Show("Произошла ошибка при сохранении вопросов и вариантов ответов.", 
-                                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                            return;
+                            if (!SaveQuestionsAndOptions(pollId, conn, transaction))
+                            {
+                                MessageBox.Show("Произошла ошибка при сохранении вопросов и вариантов ответов.",
+                                               "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                                transaction.Rollback();
+                                return;
+                            }
                         }
+
+                        // Завершаем транзакцию
+                        transaction.Commit();
+
+                        MessageBox.Show(_isEditingMode ?
+                                       "Опрос успешно обновлен!" :
+                                       "Опрос успешно сохранен в базе данных!",
+                                       "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        Close();
                     }
-                    
-                    // Проверяем, сохранился ли пароль
-                    string checkQuery = "SELECT password FROM polls WHERE id = @id";
-                    using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
+                    catch (Exception ex)
                     {
-                        checkCmd.Parameters.AddWithValue("@id", pollId);
-                        object savedPassword = checkCmd.ExecuteScalar();
-                        
-                        MessageBox.Show($"Проверка сохранения пароля:\nID опроса: {pollId}\nСохраненный пароль: {savedPassword ?? "NULL"}", 
-                                       "Результат сохранения", MessageBoxButton.OK, MessageBoxImage.Information);
+                        // В случае ошибки отменяем транзакцию
+                        transaction.Rollback();
+                        MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                    
-                    MessageBox.Show(_isEditingMode ? 
-                                   "Опрос успешно обновлен!" : 
-                                   "Опрос успешно сохранен в базе данных!", 
-                                   "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    
-                    Close();
                 }
             }
             catch (Exception ex)
@@ -848,13 +1170,51 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при сохранении данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
+        private bool CreateCandidateImagesTableIfNotExists(MySqlConnection conn)
+        {
+            try
+            {
+                string checkTableQuery = "SHOW TABLES LIKE 'candidate_images'";
+                using (MySqlCommand cmd = new MySqlCommand(checkTableQuery, conn))
+                {
+                    object result = cmd.ExecuteScalar();
+                    if (result == null)
+                    {
+                        string createTableQuery = @"
+                        CREATE TABLE IF NOT EXISTS `candidate_images` (
+                          `id` INT NOT NULL AUTO_INCREMENT,
+                          `poll_id` INT NOT NULL,
+                          `candidate_name` VARCHAR(255) NOT NULL,
+                          `image_data` LONGBLOB NULL,
+                          `description` TEXT NULL,
+                          PRIMARY KEY (`id`),
+                          INDEX `idx_poll_id` (`poll_id` ASC)
+                        )";
+                        using (MySqlCommand createCmd = new MySqlCommand(createTableQuery, conn))
+                        {
+                            createCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при проверке/создании таблицы candidate_images: {ex.Message}",
+                               "Ошибка базы данных", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
         private void PreviewButton_Click(object sender, RoutedEventArgs e)
         {
             string title = TitleTextBox.Text;
             FlowDocument descriptionDoc = DescriptionRichTextBox.Document;
             string pollType = ((ComboBoxItem)PollTypeComboBox.SelectedItem)?.Content?.ToString() ?? "Одиночный выбор (радиокнопки)";
             object pollData = null;
+
+            string description = new TextRange(descriptionDoc.ContentStart, descriptionDoc.ContentEnd).Text?.Trim() ?? "";
 
             switch (pollType)
             {
@@ -863,16 +1223,132 @@ namespace Project_Vote
                     pollData = _pollOptions;
                     break;
                 case "Тест с вопросами и вариантами ответов":
-
                     pollData = _questions;
                     break;
-                default:
+                case "Голосование":
+                    // Проверяем наличие вариантов
+                    if (_pollOptions == null || _pollOptions.Count == 0)
+                    {
+                        MessageBox.Show("Необходимо добавить хотя бы одного кандидата для предпросмотра голосования.",
+                                        "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
 
+                    // Если выбран тип "Голосование", отображаем в TestGolosovania
+                    // Для предпросмотра сначала сохраняем временный опрос в базу данных
+                    if (_isEditingMode && _editingPollId > 0)
+                    {
+                        // Если мы редактируем существующий опрос, используем его ID
+                        TestGolosovania voteWindow = new TestGolosovania(_editingPollId);
+                        voteWindow.Owner = this;
+                        voteWindow.ShowDialog();
+                    }
+                    else
+                    {
+                        // Для нового опроса нужно сначала создать временную запись
+                        try
+                        {
+                            using (MySqlConnection conn = new MySqlConnection(connectionString))
+                            {
+                                conn.Open();
+
+                                // Создаем таблицы если нужно
+                                if (!CreatePollTableIfNotExists(conn) || !CreateCandidateImagesTableIfNotExists(conn))
+                                {
+                                    return;
+                                }
+
+                                // Создаем временную запись опроса
+                                int tempPollId = -1;
+
+                                string insertQuery = @"
+                                    INSERT INTO polls 
+                                    (user_id, title, description, poll_type, created_at, is_active, options, created_by, password, end_date) 
+                                    VALUES 
+                                    (@user_id, @title, @description, @poll_type, @created_at, @is_active, @options, @created_by, @password, @end_date)";
+
+                                using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@user_id", CurrentUser.UserId);
+                                    cmd.Parameters.AddWithValue("@title", title);
+                                    cmd.Parameters.AddWithValue("@description", description);
+                                    cmd.Parameters.AddWithValue("@poll_type", "Голосование");
+                                    cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
+                                    cmd.Parameters.AddWithValue("@is_active", true);
+
+                                    // Формируем строку с вариантами
+                                    List<string> options = new List<string>();
+                                    foreach (var option in _pollOptions)
+                                    {
+                                        if (!string.IsNullOrEmpty(option.Text))
+                                            options.Add(option.Text);
+                                    }
+                                    cmd.Parameters.AddWithValue("@options", string.Join("|||", options));
+
+                                    cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
+                                    cmd.Parameters.AddWithValue("@password", !string.IsNullOrEmpty(PasswordBox.Password) ? PasswordBox.Password : (object)DBNull.Value);
+
+                                    // Устанавливаем дату окончания
+                                    if (NoLimitCheckBox.IsChecked == true)
+                                        cmd.Parameters.AddWithValue("@end_date", new DateTime(9999, 12, 31));
+                                    else
+                                        cmd.Parameters.AddWithValue("@end_date", EndDatePicker.SelectedDate ?? DateTime.Now.AddDays(7));
+
+                                    cmd.ExecuteNonQuery();
+                                    tempPollId = (int)cmd.LastInsertedId;
+                                }
+
+                                // Сохраняем изображения кандидатов
+                                foreach (var option in _pollOptions)
+                                {
+                                    if (option.ImageData != null && option.ImageData.Length > 0)
+                                    {
+                                        string insertImageQuery = @"
+                                            INSERT INTO candidate_images 
+                                            (poll_id, candidate_name, image_data, description) 
+                                            VALUES 
+                                            (@poll_id, @candidate_name, @image_data, @description)";
+
+                                        using (MySqlCommand cmd = new MySqlCommand(insertImageQuery, conn))
+                                        {
+                                            cmd.Parameters.AddWithValue("@poll_id", tempPollId);
+                                            cmd.Parameters.AddWithValue("@candidate_name", option.Text);
+                                            cmd.Parameters.AddWithValue("@image_data", option.ImageData);
+                                            cmd.Parameters.AddWithValue("@description", option.ImageDescription ?? string.Empty);
+
+                                            cmd.ExecuteNonQuery();
+                                        }
+                                    }
+                                }
+
+                                // Открываем окно голосования с созданным ID
+                                TestGolosovania voteWindow = new TestGolosovania(tempPollId);
+                                voteWindow.Owner = this;
+                                voteWindow.ShowDialog();
+
+                                // После закрытия окна удаляем временную запись, если это предпросмотр
+                                string deleteQuery = "DELETE FROM polls WHERE id = @id";
+                                using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@id", tempPollId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Ошибка при создании временного голосования для предпросмотра: {ex.Message}",
+                                           "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    return;
+                default:
                     break;
             }
 
             try
             {
+                // Для других типов опросов используем стандартный предпросмотр
                 PollPreview previewWindow = new PollPreview(title, descriptionDoc, pollType, pollData);
                 previewWindow.Owner = this;
                 previewWindow.ShowDialog();
@@ -882,7 +1358,7 @@ namespace Project_Vote
                 MessageBox.Show($"Ошибка при открытии предпросмотра: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Вы уверены, что хотите отменить создание опроса? Все несохраненные данные будут утеряны.", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -893,22 +1369,22 @@ namespace Project_Vote
         private void LoadQuestionsWithImages(int pollId, MySqlConnection conn)
         {
             _questions.Clear();
-            
+
             try
             {
                 // Сначала загружаем все вопросы вместе с их ID
                 Dictionary<int, Question> questionsWithIds = new Dictionary<int, Question>();
-                
+
                 string questionsQuery = @"
                     SELECT id, question_text, question_image, image_description
                     FROM questions 
                     WHERE poll_id = @pollId 
                     ORDER BY question_order";
-                    
+
                 using (MySqlCommand cmd = new MySqlCommand(questionsQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@pollId", pollId);
-                    
+
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -918,40 +1394,47 @@ namespace Project_Vote
                             {
                                 QuestionText = reader.GetString("question_text")
                             };
-                            
+
                             // Загружаем изображение вопроса, если оно есть
                             if (!reader.IsDBNull(reader.GetOrdinal("question_image")))
                             {
                                 byte[] imageData = (byte[])reader["question_image"];
                                 question.ImageData = imageData;
-                                
-                                // Создаем BitmapImage для отображения
-                                using (MemoryStream ms = new MemoryStream(imageData))
+
+                                try
                                 {
-                                    BitmapImage bitmap = new BitmapImage();
-                                    bitmap.BeginInit();
-                                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                    bitmap.StreamSource = ms;
-                                    bitmap.EndInit();
-                                    bitmap.Freeze();
-                                    
-                                    // Устанавливаем изображение напрямую
-                                    question.QuestionImageSource = bitmap;
+                                    // Создаем BitmapImage для отображения
+                                    using (MemoryStream ms = new MemoryStream(imageData))
+                                    {
+                                        BitmapImage bitmap = new BitmapImage();
+                                        bitmap.BeginInit();
+                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        bitmap.StreamSource = ms;
+                                        bitmap.EndInit();
+                                        bitmap.Freeze();
+
+                                        question.QuestionImageSource = bitmap;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show($"Ошибка при загрузке изображения вопроса: {ex.Message}",
+                                                  "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                                 }
                             }
-                            
+
                             // Загружаем описание изображения
                             if (!reader.IsDBNull(reader.GetOrdinal("image_description")))
                             {
                                 question.ImageDescription = reader.GetString("image_description");
                             }
-                            
+
                             questionsWithIds.Add(questionId, question);
                             _questions.Add(question);
                         }
                     }
                 }
-                
+
                 // Теперь загружаем варианты ответов для каждого вопроса
                 if (questionsWithIds.Count > 0)
                 {
@@ -960,7 +1443,7 @@ namespace Project_Vote
                         FROM question_options
                         WHERE question_id IN (" + string.Join(",", questionsWithIds.Keys) + @")
                         ORDER BY question_id, option_order";
-                    
+
                     using (MySqlCommand cmd = new MySqlCommand(allOptionsQuery, conn))
                     {
                         using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -975,34 +1458,41 @@ namespace Project_Vote
                                         Text = reader.GetString("option_text"),
                                         IsCorrect = reader.GetBoolean("is_correct")
                                     };
-                                    
+
                                     // Загружаем изображение варианта ответа, если оно есть
                                     if (!reader.IsDBNull(reader.GetOrdinal("option_image")))
                                     {
                                         byte[] imageData = (byte[])reader["option_image"];
                                         option.ImageData = imageData;
-                                        
-                                        // Создаем BitmapImage для отображения
-                                        using (MemoryStream ms = new MemoryStream(imageData))
+
+                                        try
                                         {
-                                            BitmapImage bitmap = new BitmapImage();
-                                            bitmap.BeginInit();
-                                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                            bitmap.StreamSource = ms;
-                                            bitmap.EndInit();
-                                            bitmap.Freeze();
-                                            
-                                            // Устанавливаем изображение напрямую
-                                            option.OptionImageSource = bitmap;
+                                            // Создаем BitmapImage для отображения
+                                            using (MemoryStream ms = new MemoryStream(imageData))
+                                            {
+                                                BitmapImage bitmap = new BitmapImage();
+                                                bitmap.BeginInit();
+                                                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                                bitmap.StreamSource = ms;
+                                                bitmap.EndInit();
+                                                bitmap.Freeze();
+
+                                                option.OptionImageSource = bitmap;
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBox.Show($"Ошибка при загрузке изображения варианта ответа: {ex.Message}",
+                                                          "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                                         }
                                     }
-                                    
+
                                     // Загружаем описание изображения
                                     if (!reader.IsDBNull(reader.GetOrdinal("image_description")))
                                     {
                                         option.ImageDescription = reader.GetString("image_description");
                                     }
-                                    
+
                                     question.Options.Add(option);
                                 }
                             }
@@ -1012,11 +1502,11 @@ namespace Project_Vote
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке вопросов и изображений: {ex.Message}", 
-                               "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при загрузке вопросов и изображений: {ex.Message}\n\nПодробности: {ex.StackTrace}",
+                              "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         public void LoadPollForEditing(int pollId)
         {
             _editingPollId = pollId;
@@ -1029,13 +1519,14 @@ namespace Project_Vote
                     conn.Open();
 
                     // Загружаем основную информацию о тесте
-                    string pollInfoQuery = "SELECT title, description, poll_type, options, created_by, password FROM polls WHERE id = @id";
+                    string pollInfoQuery = "SELECT title, description, poll_type, options, created_by, password, end_date FROM polls WHERE id = @id";
                     string title = "";
                     string description = "";
                     string pollType = "Одиночный выбор (радиокнопки)";
                     string options = "";
                     string createdBy = "";
                     string password = "";
+                    DateTime endDate = DateTime.Now.AddDays(7); // По умолчанию опрос активен 7 дней
 
                     using (MySqlCommand cmd = new MySqlCommand(pollInfoQuery, conn))
                     {
@@ -1052,6 +1543,12 @@ namespace Project_Vote
                                 options = reader.IsDBNull(reader.GetOrdinal("options")) ? "" : reader.GetString("options");
                                 createdBy = reader.IsDBNull(reader.GetOrdinal("created_by")) ? "" : reader.GetString("created_by");
                                 password = reader.IsDBNull(reader.GetOrdinal("password")) ? "" : reader.GetString("password");
+
+                                // Загружаем дату окончания опроса
+                                if (!reader.IsDBNull(reader.GetOrdinal("end_date")))
+                                {
+                                    endDate = reader.GetDateTime("end_date");
+                                }
                             }
                             else
                             {
@@ -1066,12 +1563,23 @@ namespace Project_Vote
                     TitleTextBox.Text = title;
                     DescriptionRichTextBox.Document.Blocks.Clear();
                     DescriptionRichTextBox.Document.Blocks.Add(new Paragraph(new Run(description)));
-                    
+
                     // Загружаем текущий пароль в поле ввода пароля
                     PasswordBox.Password = password;
-                    
-                    // Показываем панель пароля только если это тест
-                    PasswordPanel.Visibility = pollType.Contains("Тест") ? Visibility.Visible : Visibility.Collapsed;
+
+                    // Устанавливаем дату окончания и чекбокс "Без ограничения времени"
+                    if (endDate.Year >= 9000) // Дата близка к максимальной - без ограничения времени
+                    {
+                        NoLimitCheckBox.IsChecked = true; // Автоматически вызовет обработчик Checked
+                    }
+                    else
+                    {
+                        NoLimitCheckBox.IsChecked = false; // На всякий случай, хотя по умолчанию и так false
+                        EndDatePicker.SelectedDate = endDate;
+                    }
+
+                    // Показываем панель пароля
+                    PasswordPanel.Visibility = Visibility.Visible;
 
                     switch (pollType)
                     {
@@ -1079,7 +1587,10 @@ namespace Project_Vote
                             PollTypeComboBox.SelectedIndex = 1;
                             break;
                         case "Тест с вопросами и вариантами ответов":
-                            PollTypeComboBox.SelectedIndex = 2;
+                            PollTypeComboBox.SelectedIndex = 1;
+                            break;
+                        case "Голосование":
+                            PollTypeComboBox.SelectedIndex = 0;
                             break;
                         default:
                             PollTypeComboBox.SelectedIndex = 0;
@@ -1094,7 +1605,7 @@ namespace Project_Vote
                             questionsConn.Open();
                             LoadQuestionsWithImages(pollId, questionsConn);
                         }
-                        
+
                         // Если после загрузки вопросов массив пуст, пробуем старый способ
                         if (_questions.Count == 0 && !string.IsNullOrEmpty(options))
                         {
@@ -1119,6 +1630,12 @@ namespace Project_Vote
                             _pollOptions.Add(new PollOption { Text = "Вариант 2" });
                             _pollOptions.Add(new PollOption { Text = "Вариант 3" });
                         }
+
+                        // Загружаем изображения кандидатов, если это голосование
+                        if (pollType == "Голосование")
+                        {
+                            LoadCandidateImages(pollId, conn);
+                        }
                     }
                     this.Title = "Редактирование опроса";
                 }
@@ -1129,15 +1646,15 @@ namespace Project_Vote
                 Close();
             }
         }
-        
+
         private void LoadQuestionsFromOptions(string options)
         {
             _questions.Clear();
-            
+
             string[] questionsArray = options.Split(new[] { "|||" }, StringSplitOptions.RemoveEmptyEntries);
-            
+
             Question currentQuestion = null;
-            
+
             foreach (var item in questionsArray)
             {
                 if (item.StartsWith("Q:"))
@@ -1167,7 +1684,7 @@ namespace Project_Vote
                     }
                 }
             }
-            
+
             // Если всё еще нет вопросов, добавляем пустой вопрос
             if (_questions.Count == 0)
             {
@@ -1177,23 +1694,23 @@ namespace Project_Vote
                 _questions.Add(newQuestion);
             }
         }
-        
+
         // Обработчик для удаления изображения для вопроса
         private void RemoveQuestionImage_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             var question = button.Tag as Question;
-            
+
             if (question == null)
                 return;
-                
+
             question.ImageData = null;
             question.ImageDescription = null;
             question.QuestionImageSource = null;
-            
+
             // Найдем контрол Image в интерфейсе
             Image imageControl = null;
-            
+
             // Пытаемся найти Image через visual tree
             if (button.Parent is FrameworkElement parent)
             {
@@ -1210,7 +1727,7 @@ namespace Project_Vote
                     }
                 }
             }
-            
+
             // Если всё еще не нашли, ищем по имени
             if (imageControl == null)
             {
@@ -1219,33 +1736,41 @@ namespace Project_Vote
                 {
                     expander = VisualTreeHelper.GetParent(expander);
                 }
-                
+
                 if (expander != null)
                 {
                     imageControl = FindVisualChild<Image>(expander as DependencyObject, "QuestionImage");
                 }
             }
-            
+
             // Если нашли контрол, очищаем его
             if (imageControl != null)
             {
                 imageControl.Source = null;
             }
         }
-        
+
         // Обработчик для загрузки изображения для вопроса
         private void UploadQuestionImage_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             var question = button.Tag as Question;
-            
+
             if (question == null)
                 return;
-                
+
+            // Проверяем наличие текста вопроса
+            if (string.IsNullOrWhiteSpace(question.QuestionText))
+            {
+                MessageBox.Show("Пожалуйста, сначала введите текст вопроса.",
+                              "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Изображения|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
             openFileDialog.Title = "Выберите изображение для вопроса";
-            
+
             if (openFileDialog.ShowDialog() == true)
             {
                 try
@@ -1257,7 +1782,7 @@ namespace Project_Vote
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
-                    
+
                     // Конвертируем изображение в массив байтов
                     JpegBitmapEncoder encoder = new JpegBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -1266,13 +1791,13 @@ namespace Project_Vote
                         encoder.Save(ms);
                         question.ImageData = ms.ToArray();
                     }
-                    
+
                     // Устанавливаем свойство QuestionImageSource
                     question.QuestionImageSource = bitmap;
-                    
+
                     // Найдем контрол Image в интерфейсе и установим источник непосредственно
                     Image imageControl = null;
-                    
+
                     // Пытаемся найти Image через visual tree
                     if (button.Parent is FrameworkElement parent)
                     {
@@ -1289,7 +1814,7 @@ namespace Project_Vote
                             }
                         }
                     }
-                    
+
                     // Если всё еще не нашли, ищем по имени
                     if (imageControl == null)
                     {
@@ -1298,18 +1823,18 @@ namespace Project_Vote
                         {
                             expander = VisualTreeHelper.GetParent(expander);
                         }
-                        
+
                         if (expander != null)
                         {
                             imageControl = FindVisualChild<Image>(expander as DependencyObject, "QuestionImage");
                         }
                     }
-                    
+
                     // Если нашли контрол, устанавливаем источник
                     if (imageControl != null)
                     {
                         imageControl.Source = bitmap;
-                        
+
                         // Обновляем UI
                         if (imageControl.Parent is Border imageBorder)
                         {
@@ -1328,20 +1853,22 @@ namespace Project_Vote
                 }
             }
         }
-        
+
         // Обработчик для загрузки изображения для варианта ответа
         private void UploadOptionImage_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            var option = button.Tag as PollOption;
-            
+            var option = button?.Tag as PollOption;
+
             if (option == null)
                 return;
-                
+
+            // Кнопка будет неактивна, если текста нет, поэтому проверка не нужна
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Изображения|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
-            openFileDialog.Title = "Выберите изображение для варианта ответа";
-            
+            openFileDialog.Title = "Выберите изображение для кандидата";
+
             if (openFileDialog.ShowDialog() == true)
             {
                 try
@@ -1353,7 +1880,7 @@ namespace Project_Vote
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
-                    
+
                     // Конвертируем изображение в массив байтов
                     JpegBitmapEncoder encoder = new JpegBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -1362,81 +1889,29 @@ namespace Project_Vote
                         encoder.Save(ms);
                         option.ImageData = ms.ToArray();
                     }
-                    
-                    // Устанавливаем свойство OptionImageSource напрямую
-                    option.OptionImageSource = bitmap;
-                    
-                    // Найдем контрол Image в интерфейсе и установим источник непосредственно
-                    Image imageControl = null;
-                    
-                    // Пытаемся найти Image через visual tree
-                    if (button.Parent is FrameworkElement parent)
-                    {
-                        // Поднимаемся до Expander
-                        var expander = parent;
-                        while (expander != null && !(expander is Expander))
-                        {
-                            expander = VisualTreeHelper.GetParent(expander) as FrameworkElement;
-                        }
-                        
-                        if (expander != null)
-                        {
-                            // Ищем Border внутри контента Expander
-                            var expanderContent = (expander as Expander).Content;
-                            if (expanderContent is FrameworkElement content)
-                            {
-                                var border = FindVisualChild<Border>(content);
-                                if (border != null)
-                                {
-                                    // Ищем Image внутри Border
-                                    imageControl = FindVisualChild<Image>(border);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Если не нашли контрол другим способом, ищем по имени
-                    if (imageControl == null)
-                    {
-                        DependencyObject current = button;
-                        
-                        // Поднимаемся вверх по дереву, пока не найдем StackPanel с Grid
-                        while (current != null && !(current is StackPanel && VisualTreeHelper.GetChildrenCount(current) > 0 && 
-                               VisualTreeHelper.GetChild(current, 0) is Grid))
-                        {
-                            current = VisualTreeHelper.GetParent(current);
-                        }
-                        
-                        if (current != null)
-                        {
-                            // Ищем Border внутри StackPanel
-                            var borders = FindVisualChildren<Border>(current);
-                            foreach (var border in borders)
-                            {
-                                var img = FindVisualChild<Image>(border, "OptionImage");
-                                if (img != null)
-                                {
-                                    imageControl = img;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    
+
+                    // Используем новый метод для обновления OptionImageSource из ImageData
+                    option.UpdateImageSource();
+
+                    // Находим элемент Image для обновления интерфейса
+                    Image imageControl = FindImageControlForOption(button);
+
                     // Если нашли контрол, устанавливаем источник
                     if (imageControl != null)
                     {
-                        imageControl.Source = bitmap;
-                        
-                        // Обновляем UI
+                        // Устанавливаем источник изображения
+                        imageControl.Source = option.OptionImageSource;
+
+                        // Обновляем видимость родительского Border, если он есть
                         if (imageControl.Parent is Border imageBorder)
                         {
+                            imageBorder.Visibility = Visibility.Visible;
                             imageBorder.UpdateLayout();
                         }
                     }
                     else
                     {
-                        MessageBox.Show("Изображение загружено, но не может быть отображено. Пожалуйста, проверьте в предпросмотре.",
+                        MessageBox.Show("Изображение загружено, но может не отображаться до перезагрузки. Проверьте в предпросмотре.",
                                       "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
@@ -1446,7 +1921,41 @@ namespace Project_Vote
                 }
             }
         }
-        
+
+        // Вспомогательный метод для поиска элемента Image для указанного варианта
+        private Image FindImageControlForOption(Button button)
+        {
+            Image imageControl = null;
+
+            if (button == null)
+                return null;
+
+            // Пытаемся найти Image через visual tree, поднимаясь вверх до родительского Border
+            DependencyObject parent = button;
+            while (parent != null && !(parent is Border) && !(parent is Grid))
+            {
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+
+            // Если нашли Border или Grid, продолжаем поиск
+            if (parent != null)
+            {
+                // Ищем Border с Image внутри (для отображения изображения)
+                var borders = FindVisualChildren<Border>(parent);
+                foreach (var border in borders)
+                {
+                    // Проверяем, является ли это Border для отображения изображения
+                    if (border.Child is Image img)
+                    {
+                        imageControl = img;
+                        break;
+                    }
+                }
+            }
+
+            return imageControl;
+        }
+
         // Вспомогательный метод для поиска всех визуальных дочерних элементов определенного типа
         private IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
         {
@@ -1454,12 +1963,12 @@ namespace Project_Vote
             for (int i = 0; i < childCount; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 if (child is T childOfType)
                 {
                     yield return childOfType;
                 }
-                
+
                 foreach (var grandChild in FindVisualChildren<T>(child))
                 {
                     yield return grandChild;
@@ -1477,7 +1986,7 @@ namespace Project_Vote
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
                 T childType = child as T;
-                if (childType != null) 
+                if (childType != null)
                 {
                     if (!string.IsNullOrEmpty(childName))
                     {
@@ -1488,14 +1997,14 @@ namespace Project_Vote
                             break;
                         }
                     }
-                    else 
+                    else
                     {
                         foundChild = childType;
                         break;
                     }
                 }
                 foundChild = FindVisualChild<T>(child, childName);
-                if (foundChild != null) break; 
+                if (foundChild != null) break;
             }
             return foundChild;
         }
@@ -1504,66 +2013,29 @@ namespace Project_Vote
         private void RemoveOptionImage_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            var option = button.Tag as PollOption;
-            
+            var option = button?.Tag as PollOption;
+
             if (option == null)
                 return;
-                
+
+            // Очищаем данные изображения
             option.ImageData = null;
             option.ImageDescription = null;
-            option.OptionImageSource = null;
-           
-            Image imageControl = null;
-            
-            if (button.Parent is FrameworkElement parent)
-            {
-                var expander = parent;
-                while (expander != null && !(expander is Expander))
-                {
-                    expander = VisualTreeHelper.GetParent(expander) as FrameworkElement;
-                }
-                
-                if (expander != null)
-                {
-                    var expanderContent = (expander as Expander).Content;
-                    if (expanderContent is FrameworkElement content)
-                    {
-                        var border = FindVisualChild<Border>(content);
-                        if (border != null)
-                        {
-                            imageControl = FindVisualChild<Image>(border);
-                        }
-                    }
-                }
-            }
+            option.UpdateImageSource(); // Обновляем ImageSource с помощью нового метода
 
-            if (imageControl == null)
-            {
-                DependencyObject current = button;
-                
-                while (current != null && !(current is StackPanel && VisualTreeHelper.GetChildrenCount(current) > 0))
-                {
-                    current = VisualTreeHelper.GetParent(current);
-                }
-                
-                if (current != null)
-                {
-                    var borders = FindVisualChildren<Border>(current);
-                    foreach (var border in borders)
-                    {
-                        var img = FindVisualChild<Image>(border);
-                        if (img != null)
-                        {
-                            imageControl = img;
-                            break;
-                        }
-                    }
-                }
-            }
-           
+            // Находим Image контрол с помощью вспомогательного метода
+            Image imageControl = FindImageControlForOption(button);
+
+            // Если нашли контрол, очищаем его
             if (imageControl != null)
             {
                 imageControl.Source = null;
+
+                // Скрываем родительский Border, если он есть
+                if (imageControl.Parent is Border imageBorder)
+                {
+                    imageBorder.Visibility = Visibility.Collapsed;
+                }
             }
         }
         private bool CreateQuestionOptionImageColumnIfNotExists(MySqlConnection connection)
@@ -1629,7 +2101,7 @@ namespace Project_Vote
                         }
                     }
                 }
-                
+
                 string checkColumnQuery = "SHOW COLUMNS FROM question_options LIKE 'option_image'";
                 using (MySqlCommand cmd = new MySqlCommand(checkColumnQuery, connection))
                 {
@@ -1641,7 +2113,7 @@ namespace Project_Vote
                         {
                             alterCmd.ExecuteNonQuery();
                         }
-                        
+
                         string alterTableDescQuery = "ALTER TABLE question_options ADD COLUMN image_description TEXT NULL";
                         using (MySqlCommand alterDescCmd = new MySqlCommand(alterTableDescQuery, connection))
                         {
@@ -1660,7 +2132,7 @@ namespace Project_Vote
                         {
                             alterCmd.ExecuteNonQuery();
                         }
-                        
+
                         string alterTableDescQuery = "ALTER TABLE questions ADD COLUMN image_description TEXT NULL";
                         using (MySqlCommand alterDescCmd = new MySqlCommand(alterTableDescQuery, connection))
                         {
@@ -1668,7 +2140,7 @@ namespace Project_Vote
                         }
                     }
                 }
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -1678,7 +2150,7 @@ namespace Project_Vote
                 return false;
             }
         }
-        private bool SaveQuestionsAndOptions(int pollId, MySqlConnection connection)
+        private bool SaveQuestionsAndOptions(int pollId, MySqlConnection connection, MySqlTransaction transaction)
         {
             try
             {
@@ -1686,102 +2158,109 @@ namespace Project_Vote
                 {
                     return false;
                 }
+
+                // Проверяем наличие текста в вопросах
+                foreach (var question in _questions)
+                {
+                    if (string.IsNullOrWhiteSpace(question.QuestionText))
+                    {
+                        MessageBox.Show("Пожалуйста, введите текст вопроса перед сохранением.",
+                                      "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return false;
+                    }
+                }
+
+                // Удаляем старые вопросы
                 string deleteQuestionsQuery = "DELETE FROM questions WHERE poll_id = @pollId";
-                using (MySqlCommand cmd = new MySqlCommand(deleteQuestionsQuery, connection))
+                using (MySqlCommand cmd = new MySqlCommand(deleteQuestionsQuery, connection, transaction))
                 {
                     cmd.Parameters.AddWithValue("@pollId", pollId);
                     cmd.ExecuteNonQuery();
                 }
-                MySqlTransaction transaction = connection.BeginTransaction();
-                
-                try
+
+                foreach (var question in _questions)
                 {
-                    foreach (var question in _questions)
+                    string insertQuestionQuery = @"
+                        INSERT INTO questions (poll_id, question_text, question_order, question_image, image_description)
+                        VALUES (@pollId, @questionText, @questionOrder, @questionImage, @imageDescription)";
+
+                    int questionId;
+                    using (MySqlCommand cmd = new MySqlCommand(insertQuestionQuery, connection, transaction))
                     {
-                        if (string.IsNullOrWhiteSpace(question.QuestionText))
-                            continue;
-                            
-                        string insertQuestionQuery = @"
-                            INSERT INTO questions (poll_id, question_text, question_order, question_image, image_description)
-                            VALUES (@pollId, @questionText, @questionOrder, @questionImage, @imageDescription)";
-                            
-                        int questionId;
-                        using (MySqlCommand cmd = new MySqlCommand(insertQuestionQuery, connection, transaction))
+                        cmd.Parameters.AddWithValue("@pollId", pollId);
+                        cmd.Parameters.AddWithValue("@questionText", question.QuestionText);
+                        cmd.Parameters.AddWithValue("@questionOrder", _questions.IndexOf(question));
+
+                        // Проверяем наличие изображения вопроса
+                        if (question.ImageData != null && question.ImageData.Length > 0)
                         {
-                            cmd.Parameters.AddWithValue("@pollId", pollId);
-                            cmd.Parameters.AddWithValue("@questionText", question.QuestionText);
-                            cmd.Parameters.AddWithValue("@questionOrder", _questions.IndexOf(question));
-                            if (question.HasImage)
+                            cmd.Parameters.AddWithValue("@questionImage", question.ImageData);
+                            cmd.Parameters.AddWithValue("@imageDescription", question.ImageDescription ?? string.Empty);
+                        }
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@questionImage", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@imageDescription", DBNull.Value);
+                        }
+
+                        cmd.ExecuteNonQuery();
+                        questionId = (int)cmd.LastInsertedId;
+                    }
+
+                    int savedOptionsCount = 0;
+                    foreach (var option in question.Options)
+                    {
+                        if (string.IsNullOrWhiteSpace(option.Text))
+                            continue;
+
+                        string insertOptionQuery = @"
+                            INSERT INTO question_options (question_id, option_text, is_correct, option_order, option_image, image_description)
+                            VALUES (@questionId, @optionText, @isCorrect, @optionOrder, @optionImage, @imageDescription)";
+
+                        using (MySqlCommand cmd = new MySqlCommand(insertOptionQuery, connection, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@questionId", questionId);
+                            cmd.Parameters.AddWithValue("@optionText", option.Text);
+                            cmd.Parameters.AddWithValue("@isCorrect", option.IsCorrect);
+                            cmd.Parameters.AddWithValue("@optionOrder", savedOptionsCount);
+
+                            // Проверяем наличие изображения варианта ответа
+                            if (option.ImageData != null && option.ImageData.Length > 0)
                             {
-                                cmd.Parameters.AddWithValue("@questionImage", question.ImageData);
-                                cmd.Parameters.AddWithValue("@imageDescription", question.ImageDescription ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@optionImage", option.ImageData);
+                                cmd.Parameters.AddWithValue("@imageDescription", option.ImageDescription ?? string.Empty);
                             }
                             else
                             {
-                                cmd.Parameters.AddWithValue("@questionImage", DBNull.Value);
+                                cmd.Parameters.AddWithValue("@optionImage", DBNull.Value);
                                 cmd.Parameters.AddWithValue("@imageDescription", DBNull.Value);
                             }
-                            
+
                             cmd.ExecuteNonQuery();
-                            questionId = (int)cmd.LastInsertedId;
-                        }
-                        int savedOptionsCount = 0;
-                        foreach (var option in question.Options)
-                        {
-                            if (string.IsNullOrWhiteSpace(option.Text))
-                                continue;
-                                
-                            string insertOptionQuery = @"
-                                INSERT INTO question_options (question_id, option_text, is_correct, option_order, option_image, image_description)
-                                VALUES (@questionId, @optionText, @isCorrect, @optionOrder, @optionImage, @imageDescription)";
-                                
-                            using (MySqlCommand cmd = new MySqlCommand(insertOptionQuery, connection, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@questionId", questionId);
-                                cmd.Parameters.AddWithValue("@optionText", option.Text);
-                                cmd.Parameters.AddWithValue("@isCorrect", option.IsCorrect);
-                                cmd.Parameters.AddWithValue("@optionOrder", savedOptionsCount); 
-                                if (option.HasImage)
-                                {
-                                    cmd.Parameters.AddWithValue("@optionImage", option.ImageData);
-                                    cmd.Parameters.AddWithValue("@imageDescription", option.ImageDescription ?? (object)DBNull.Value);
-                                }
-                                else
-                                {
-                                    cmd.Parameters.AddWithValue("@optionImage", DBNull.Value);
-                                    cmd.Parameters.AddWithValue("@imageDescription", DBNull.Value);
-                                }
-                                
-                                cmd.ExecuteNonQuery();
-                                savedOptionsCount++;
-                            }
-                        }
-                        if (savedOptionsCount == 0)
-                        {
-                            string insertEmptyOptionQuery = @"
-                                INSERT INTO question_options (question_id, option_text, is_correct, option_order)
-                                VALUES (@questionId, 'Нет вариантов ответа', 0, 0)";
-                                
-                            using (MySqlCommand cmd = new MySqlCommand(insertEmptyOptionQuery, connection, transaction))
-                            {
-                                cmd.Parameters.AddWithValue("@questionId", questionId);
-                                cmd.ExecuteNonQuery();
-                            }
+                            savedOptionsCount++;
                         }
                     }
-                    transaction.Commit();
-                    return true;
+
+                    if (savedOptionsCount == 0)
+                    {
+                        string insertEmptyOptionQuery = @"
+                            INSERT INTO question_options (question_id, option_text, is_correct, option_order)
+                            VALUES (@questionId, 'Нет вариантов ответа', 0, 0)";
+
+                        using (MySqlCommand cmd = new MySqlCommand(insertEmptyOptionQuery, connection, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@questionId", questionId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
                 }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    throw new Exception($"Ошибка при сохранении: {ex.Message}", ex);
-                }
+
+                return true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении вопросов и вариантов ответов: {ex.Message}",
-                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при сохранении вопросов и вариантов ответов: {ex.Message}\n\nПодробности: {ex.StackTrace}",
+                              "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -1789,7 +2268,7 @@ namespace Project_Vote
         private void TogglePasswordVisibility_Click(object sender, RoutedEventArgs e)
         {
             _isPasswordVisible = !_isPasswordVisible;
-            
+
             if (_isPasswordVisible)
             {
                 PasswordTextBox.Text = PasswordBox.Password;
@@ -1810,6 +2289,129 @@ namespace Project_Vote
             if (_isPasswordVisible && PasswordTextBox.Visibility == Visibility.Visible)
             {
                 PasswordBox.Password = PasswordTextBox.Text;
+            }
+        }
+
+        private void LoadCandidateImages(int pollId, MySqlConnection conn)
+        {
+            try
+            {
+                string query = @"
+                    SELECT candidate_name, image_data, description
+                    FROM candidate_images
+                    WHERE poll_id = @pollId";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@pollId", pollId);
+
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string candidateName = reader.GetString("candidate_name");
+                            byte[] imageData = null;
+                            string description = null;
+
+                            // Получаем изображение, если оно есть
+                            if (!reader.IsDBNull(reader.GetOrdinal("image_data")))
+                            {
+                                imageData = (byte[])reader["image_data"];
+                            }
+
+                            // Получаем описание, если оно есть
+                            if (!reader.IsDBNull(reader.GetOrdinal("description")))
+                            {
+                                description = reader.GetString("description");
+                            }
+
+                            // Ищем вариант с таким же именем в коллекции
+                            var option = _pollOptions.FirstOrDefault(o => o.Text == candidateName);
+                            if (option != null && imageData != null && imageData.Length > 0)
+                            {
+                                option.ImageData = imageData;
+                                option.ImageDescription = description;
+                                option.UpdateImageSource(); // Обновляем источник изображения
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке изображений кандидатов: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Обработчик события Checked для флажка "Без ограничения времени"
+        private void NoLimitCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            EndDatePicker.IsEnabled = false;
+            // Устанавливаем максимально возможную дату (9999-12-31) для обозначения "без ограничений"
+            EndDatePicker.SelectedDate = new DateTime(9999, 12, 31);
+        }
+
+        // Обработчик события Unchecked для флажка "Без ограничения времени"
+        private void NoLimitCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            EndDatePicker.IsEnabled = true;
+            // Возвращаем дату по умолчанию (+7 дней)
+            EndDatePicker.SelectedDate = DateTime.Now.AddDays(7);
+        }
+
+        // Метод для проверки активности опроса/теста на основе даты окончания
+        public static bool IsPollActive(DateTime endDate)
+        {
+            // Если дата окончания близка к максимально возможной дате, считаем, что ограничения нет
+            if (endDate.Year >= 9000)
+                return true;
+
+            // Иначе проверяем, не истек ли срок
+            return DateTime.Now.Date <= endDate.Date;
+        }
+
+        // Публичный статический метод для проверки активности опроса и вывода сообщения
+        public static bool CheckPollExpiration(DateTime endDate, string pollTitle)
+        {
+            // Проверяем, активен ли опрос
+            if (!IsPollActive(endDate))
+            {
+                MessageBox.Show(
+                    $"Срок действия опроса/теста \"{pollTitle}\" истек {endDate.ToShortDateString()}.\n\n" +
+                    "Данный опрос больше недоступен для прохождения.",
+                    "Срок опроса истек",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return false; // Опрос неактивен
+            }
+
+            return true; // Опрос активен
+        }
+
+        public void SetTemplateValues(string title, string pollType)
+        {
+            // Устанавливаем значение заголовка
+            if (!string.IsNullOrEmpty(title))
+            {
+                TitleTextBox.Text = title;
+                _currentPoll.Title = title;
+            }
+
+
+            if (!string.IsNullOrEmpty(pollType))
+            {
+                // Находим соответствующий элемент в ComboBox
+                foreach (ComboBoxItem item in PollTypeComboBox.Items)
+                {
+                    if (item.Content.ToString() == pollType)
+                    {
+                        PollTypeComboBox.SelectedItem = item;
+                        _currentPoll.PollType = pollType;
+                        break;
+                    }
+                }
             }
         }
     }

@@ -76,11 +76,17 @@
     <Compile Include="Registration.xaml.cs">
       <DependentUpon>Registration.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Resultat_test.xaml.cs">
+      <DependentUpon>Resultat_test.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SearchResultWindow.xaml.cs">
       <DependentUpon>SearchResultWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Templatesxaml.xaml.cs">
       <DependentUpon>Templatesxaml.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="TestGolosovania.xaml.cs">
+      <DependentUpon>TestGolosovania.xaml</DependentUpon>
     </Compile>
     <Compile Include="TestListWindow.xaml.cs">
       <DependentUpon>TestListWindow.xaml</DependentUpon>
@@ -91,11 +97,20 @@
     <Compile Include="TestResultWindow.xaml.cs">
       <DependentUpon>TestResultWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TEST_Results.xaml.cs">
+      <DependentUpon>TEST_Results.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserPollsWindow.xaml.cs">
       <DependentUpon>UserPollsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Vhod.xaml.cs">
       <DependentUpon>Vhod.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Voit_Results.xaml.cs">
+      <DependentUpon>Voit_Results.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="VotingWindow.xaml.cs">
+      <DependentUpon>VotingWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Window1.xaml.cs">
       <DependentUpon>Window1.xaml</DependentUpon>
@@ -124,11 +139,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Resultat_test.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SearchResultWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Templatesxaml.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TestGolosovania.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -144,11 +167,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="TEST_Results.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserPollsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Vhod.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Voit_Results.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="VotingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -182,9 +217,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="11.jpg" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="istockphoto-120581357-612x612.jpg" />

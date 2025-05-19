@@ -1,7 +1,6 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Input;
+﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Project_Vote
 {
@@ -26,7 +25,7 @@ namespace Project_Vote
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            
+
             Password = _isPasswordVisible ? PasswordTextBox.Text : PasswordBox.Password;
 
             // Если пароль пустой, показываем предупреждение
@@ -34,12 +33,12 @@ namespace Project_Vote
             {
                 MessageBox.Show("Пожалуйста, введите пароль.", "Пароль не введен",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                
+
                 if (_isPasswordVisible)
                     PasswordTextBox.Focus();
                 else
                     PasswordBox.Focus();
-                    
+
                 return;
             }
 
@@ -73,7 +72,7 @@ namespace Project_Vote
         private void TogglePasswordVisibility_Click(object sender, RoutedEventArgs e)
         {
             _isPasswordVisible = !_isPasswordVisible;
-            
+
             if (_isPasswordVisible)
             {
                 // Показываем пароль в текстовом поле
@@ -94,7 +93,7 @@ namespace Project_Vote
                 PasswordBox.Focus();
             }
         }
-        
+
         // Метод для синхронизации текста между PasswordBox и TextBox
         private void PasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {

@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel; 
-using System.Linq; 
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents; 
-using System.Windows.Media; 
 using System.Windows.Data;
-using System.IO;
+using System.Windows.Documents;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Globalization;
 using PollOptionGolos = Project_Vote.Golos.PollOption;
 using QuestionGolos = Project_Vote.Golos.Question;
 
@@ -32,7 +31,7 @@ namespace Project_Vote
     public partial class PollPreview : Window
     {
         private string _pollType;
-        private object _pollData; 
+        private object _pollData;
         public PollPreview(string title, FlowDocument descriptionDocument, string pollType, object pollData)
         {
             InitializeComponent();
@@ -43,15 +42,15 @@ namespace Project_Vote
                 {
                     var stream = new System.IO.MemoryStream();
                     TextRange source = new TextRange(descriptionDocument.ContentStart, descriptionDocument.ContentEnd);
-                    source.Save(stream, DataFormats.XamlPackage); 
+                    source.Save(stream, DataFormats.XamlPackage);
                     TextRange dest = new TextRange(DescriptionRichTextBox.Document.ContentStart, DescriptionRichTextBox.Document.ContentEnd);
                     dest.Load(stream, DataFormats.XamlPackage);
                     stream.Close();
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
-                     DescriptionRichTextBox.Document.Blocks.Clear();
-                     DescriptionRichTextBox.Document.Blocks.Add(new Paragraph(new Run($"Ошибка загрузки описания: {ex.Message}")));
+                    DescriptionRichTextBox.Document.Blocks.Clear();
+                    DescriptionRichTextBox.Document.Blocks.Add(new Paragraph(new Run($"Ошибка загрузки описания: {ex.Message}")));
                 }
             }
             else
@@ -61,13 +60,13 @@ namespace Project_Vote
             }
             _pollType = pollType;
             _pollData = pollData;
-            
+
             // Подготовка изображений для предпросмотра
             PrepareImagesForPreview();
-            
+
             Loaded += PollPreview_Loaded;
         }
-        
+
         // Метод для подготовки изображений в предпросмотре
         private void PrepareImagesForPreview()
         {
@@ -88,7 +87,7 @@ namespace Project_Vote
                                 bitmap.StreamSource = ms;
                                 bitmap.EndInit();
                                 bitmap.Freeze();
-                                
+
                                 // Динамически добавляем свойство для привязки
                                 AddDynamicPropertyIfNeeded(question, "QuestionImageSource");
                                 question.GetType().GetProperty("QuestionImageSource")?.SetValue(question, bitmap);
@@ -99,7 +98,7 @@ namespace Project_Vote
                             System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке изображения вопроса: {ex.Message}");
                         }
                     }
-                    
+
                     // Загружаем изображения вариантов ответов
                     foreach (var option in question.Options)
                     {
@@ -115,7 +114,7 @@ namespace Project_Vote
                                     bitmap.StreamSource = ms;
                                     bitmap.EndInit();
                                     bitmap.Freeze();
-                                    
+
                                     // Динамически добавляем свойство для привязки
                                     AddDynamicPropertyIfNeeded(option, "OptionImageSource");
                                     option.GetType().GetProperty("OptionImageSource")?.SetValue(option, bitmap);
@@ -130,7 +129,7 @@ namespace Project_Vote
                 }
             }
         }
-        
+
         // Метод для динамического добавления свойства
         private void AddDynamicPropertyIfNeeded(object obj, string propertyName)
         {
@@ -145,7 +144,7 @@ namespace Project_Vote
         }
         private void PollPreview_Loaded(object sender, RoutedEventArgs e)
         {
-            try 
+            try
             {
                 switch (_pollType)
                 {
@@ -167,9 +166,10 @@ namespace Project_Vote
             }
             catch (Exception ex)
             {
-                 MessageBox.Show($"Ошибка при загрузке шаблона предпросмотра: {ex.Message}", "Ошибка предпросмотра", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при загрузке шаблона предпросмотра: {ex.Message}", "Ошибка предпросмотра", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private void SetupSelectionControls(bool useCheckBox)
         {
             Dispatcher.BeginInvoke(new Action(() =>
@@ -185,7 +185,7 @@ namespace Project_Vote
                         ContentPresenter presenter = FindVisualChild<ContentPresenter>(container);
                         if (presenter == null && container is Border borderContainer)
                         {
-                           presenter = FindVisualChild<ContentPresenter>(borderContainer);
+                            presenter = FindVisualChild<ContentPresenter>(borderContainer);
                         }
                         if (presenter == null) continue;
                         presenter.ApplyTemplate();
@@ -206,8 +206,8 @@ namespace Project_Vote
                                 RadioButton rb = new RadioButton();
                                 if (PollItemsControl.TryFindResource("OptionRadioButtonStyle") is Style rbStyle)
                                 {
-                                     rb.Style = rbStyle;
-                                     rb.GroupName = "PreviewOptionsGroup";
+                                    rb.Style = rbStyle;
+                                    rb.GroupName = "PreviewOptionsGroup";
                                 }
                                 selectionControl.Content = rb;
                             }
@@ -243,45 +243,45 @@ namespace Project_Vote
                         optionsItemsControl.ApplyTemplate();
                         optionsItemsControl.Dispatcher.BeginInvoke(new Action(() =>
                         {
-                             if (optionsItemsControl.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
-                             {
-                                 System.Diagnostics.Debug.WriteLine($"Контейнеры для вариантов вопроса '{question.QuestionText}' еще не сгенерированы.");
-                             }
-                             int correctAnswersCount = question.Options?.Count(opt => opt.IsCorrect) ?? 0;
-                             bool useCheckBoxForQuestion = correctAnswersCount > 1;
-                             foreach (PollOptionGolos option in optionsItemsControl.Items.OfType<PollOptionGolos>())
-                             {
-                                 DependencyObject optionContainer = optionsItemsControl.ItemContainerGenerator.ContainerFromItem(option);
-                                 if (optionContainer == null) continue;
-                                 ContentControl selectionControl = FindVisualChild<ContentControl>(optionContainer, "QuestionOptionSelectionControl");
-                                 if (selectionControl != null)
-                                 {
-                                     if (useCheckBoxForQuestion)
-                                     {
-                                         CheckBox cb = new CheckBox();
-                                         if (PollItemsControl.TryFindResource("OptionCheckBoxStyle") is Style cbStyle)
-                                         {
-                                             cb.Style = cbStyle;
-                                         }
-                                         selectionControl.Content = cb;
-                                     }
-                                     else
-                                     {
-                                         RadioButton rb = new RadioButton();
-                                         if (PollItemsControl.TryFindResource("OptionRadioButtonStyle") is Style rbStyle)
-                                         {
-                                             rb.Style = rbStyle;
-                                         }
-                                         rb.GroupName = $"Question_{question.GetHashCode()}";
-                                         selectionControl.Content = rb;
-                                     }
-                                 }
-                                 else
-                                 {
-                                      System.Diagnostics.Debug.WriteLine($"Не удалось найти QuestionOptionSelectionControl для варианта: {option.Text} в вопросе: {question.QuestionText}");
-                                 }
-                             }
-                        }), System.Windows.Threading.DispatcherPriority.Loaded); 
+                            if (optionsItemsControl.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Контейнеры для вариантов вопроса '{question.QuestionText}' еще не сгенерированы.");
+                            }
+                            int correctAnswersCount = question.Options?.Count(opt => opt.IsCorrect) ?? 0;
+                            bool useCheckBoxForQuestion = correctAnswersCount > 1;
+                            foreach (PollOptionGolos option in optionsItemsControl.Items.OfType<PollOptionGolos>())
+                            {
+                                DependencyObject optionContainer = optionsItemsControl.ItemContainerGenerator.ContainerFromItem(option);
+                                if (optionContainer == null) continue;
+                                ContentControl selectionControl = FindVisualChild<ContentControl>(optionContainer, "QuestionOptionSelectionControl");
+                                if (selectionControl != null)
+                                {
+                                    if (useCheckBoxForQuestion)
+                                    {
+                                        CheckBox cb = new CheckBox();
+                                        if (PollItemsControl.TryFindResource("OptionCheckBoxStyle") is Style cbStyle)
+                                        {
+                                            cb.Style = cbStyle;
+                                        }
+                                        selectionControl.Content = cb;
+                                    }
+                                    else
+                                    {
+                                        RadioButton rb = new RadioButton();
+                                        if (PollItemsControl.TryFindResource("OptionRadioButtonStyle") is Style rbStyle)
+                                        {
+                                            rb.Style = rbStyle;
+                                        }
+                                        rb.GroupName = $"Question_{question.GetHashCode()}";
+                                        selectionControl.Content = rb;
+                                    }
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Не удалось найти QuestionOptionSelectionControl для варианта: {option.Text} в вопросе: {question.QuestionText}");
+                                }
+                            }
+                        }), System.Windows.Threading.DispatcherPriority.Loaded);
                     }
                 }
                 catch (Exception ex)
@@ -299,7 +299,7 @@ namespace Project_Vote
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
                 T childType = child as T;
-                if (childType != null) 
+                if (childType != null)
                 {
                     if (!string.IsNullOrEmpty(childName))
                     {
@@ -310,14 +310,14 @@ namespace Project_Vote
                             break;
                         }
                     }
-                    else 
+                    else
                     {
                         foundChild = childType;
                         break;
                     }
                 }
                 foundChild = FindVisualChild<T>(child, childName);
-                if (foundChild != null) break; 
+                if (foundChild != null) break;
             }
             return foundChild;
         }

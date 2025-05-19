@@ -1,0 +1,142 @@
+﻿<Window x:Class="Project_Vote.TestGolosovania"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Vote"
+        mc:Ignorable="d"
+        Title="Голосование" Height="700" Width="900" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <LinearGradientBrush x:Key="ButtonGradientBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#4A90E2" Offset="0.0"/>
+            <GradientStop Color="#357ABD" Offset="1.0"/>
+        </LinearGradientBrush>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CandidateCardStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Background" Value="#F9F9F9"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#E3F0FF"/>
+                    <Setter Property="BorderBrush" Value="#4A90E2"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок и информация о голосовании -->
+        <StackPanel Grid.Row="0" Margin="20,20,20,10">
+            <TextBlock x:Name="TitleTextBlock" FontSize="24" FontWeight="Bold" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10"/>
+            <TextBlock x:Name="DescriptionTextBlock" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,15"/>
+            <TextBlock x:Name="EndDateTextBlock" FontSize="14" FontStyle="Italic" TextAlignment="Right" Margin="0,0,0,5"/>
+            <Rectangle Height="1" Fill="#DDDDDD" Margin="0,10,0,0"/>
+            <TextBlock Text="Выберите кандидата, за которого хотите проголосовать:" 
+                       FontSize="16" FontWeight="SemiBold" Margin="0,15,0,5"/>
+        </StackPanel>
+
+        <!-- Список кандидатов -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,0,20,0">
+            <ItemsControl x:Name="CandidatesItemsControl">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CandidateCardStyle}" MouseLeftButtonDown="Candidate_MouseLeftButtonDown">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Margin="0,0,15,0"
+                                        Width="150" Height="150" VerticalAlignment="Top"
+                                        Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Image Source="{Binding OptionImageSource}" Stretch="Uniform" Margin="5"/>
+                                </Border>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Text}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                    <TextBlock Text="{Binding ImageDescription}" TextWrapping="Wrap"/>
+                                    <Border Background="#4A90E2" CornerRadius="4" Padding="8,4" Margin="0,10,0,0" HorizontalAlignment="Left"
+                                            Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Text="Выбрано" Foreground="White" FontWeight="SemiBold"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,20">
+            <Button x:Name="VoteButton" Content="Проголосовать" Click="VoteButton_Click"/>
+            <Button x:Name="CancelButton" Content="Отмена" Click="CancelButton_Click"/>
+        </StackPanel>
+        <Border x:Name="ResultPanel" Grid.RowSpan="3" Background="#80000000" Visibility="Collapsed">
+            <Border Background="White" CornerRadius="8" Width="400" Height="250" Padding="20">
+                <StackPanel>
+                    <TextBlock x:Name="ResultTitleTextBlock" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="ResultMessageTextBlock" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Посмотреть результаты" Click="ShowResultsButton_Click" 
+                                Margin="0,0,10,0" Background="#4CAF50" Foreground="White">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button Content="Закрыть" Click="CloseResult_Click" HorizontalAlignment="Center">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</Window>

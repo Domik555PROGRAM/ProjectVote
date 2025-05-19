@@ -1,0 +1,85 @@
+﻿<Window x:Class="Project_Vote.TestVotingResultsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Project_Vote"
+        mc:Ignorable="d"
+        Title="Результаты голосования" Height="600" Width="800"
+        WindowStartupLocation="CenterOwner"
+        Background="#f0f0f0">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <TextBlock Grid.Row="0" x:Name="TitleText" Text="Результаты голосования" 
+                   FontSize="24" FontWeight="Bold" Foreground="#0066cc" Margin="0,0,0,15"/>
+
+        <!-- Информация о голосовании -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+            <TextBlock Text="Дата и время:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <TextBlock x:Name="DateTimeText" Text="01.01.2023 12:00:00" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Всего проголосовало:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <TextBlock x:Name="TotalVotesText" Text="0 человек" Margin="0,0,0,10"/>
+        </StackPanel>
+
+        <!-- Результаты голосования -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Таблица с результатами -->
+            <DataGrid Grid.Column="0" x:Name="ResultsDataGrid" 
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      Background="White" BorderBrush="#ddd" BorderThickness="1"
+                      RowBackground="White" AlternatingRowBackground="#f9f9f9"
+                      VerticalAlignment="Top" Margin="0,0,10,0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Кандидат" Binding="{Binding OptionName}" Width="2*"/>
+                    <DataGridTextColumn Header="Голосов" Binding="{Binding VotesCount}" Width="*"/>
+                    <DataGridTextColumn Header="Процент" Binding="{Binding Percentage, StringFormat={}{0:N2}%}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Круговая диаграмма -->
+            <Border Grid.Column="1" Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                    CornerRadius="5" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Распределение голосов" 
+                               FontWeight="Bold" FontSize="16" Margin="0,0,0,15"
+                               HorizontalAlignment="Center"/>
+
+                    <Canvas Grid.Row="1" x:Name="ChartCanvas" Background="Transparent"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <!-- Диаграмма будет построена программно -->
+                    </Canvas>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Кнопка закрытия -->
+        <Button Grid.Row="3" Content="Закрыть" HorizontalAlignment="Right" 
+                Padding="20,10" Margin="0,20,0,0" Click="CloseButton_Click"
+                Background="#0066cc" Foreground="White" BorderThickness="0">
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+    </Grid>
+</Window> 

@@ -79,10 +79,10 @@
                                 <!-- Изображение вопроса, если есть -->
                                 <Border BorderBrush="#dadce0" BorderThickness="1" CornerRadius="4" 
                                         Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        Margin="0,0,0,15" MaxHeight="300">
+                                        Margin="0,0,0,15" MaxHeight="500">
                                     <StackPanel>
                                         <Image x:Name="QuestionImage" Source="{Binding QuestionImageSource}" 
-                                               Stretch="Uniform" Margin="5" MaxHeight="250"/>
+                                               Stretch="Uniform" Margin="5" MaxHeight="450"/>
                                         <TextBlock Text="{Binding ImageDescription}" Margin="8" 
                                                    TextWrapping="Wrap" Foreground="#5f6368"
                                                    Visibility="{Binding ImageDescription, Converter={StaticResource StringToVisibilityConverter}}"/>
@@ -105,10 +105,10 @@
                                                 <!-- Изображение варианта ответа, если есть -->
                                                 <Border BorderBrush="#dadce0" BorderThickness="1" CornerRadius="4" 
                                                         Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                        Margin="30,8,0,5" MaxHeight="200">
+                                                        Margin="30,8,0,5" MaxHeight="400">
                                                     <StackPanel>
                                                         <Image x:Name="OptionImage" Source="{Binding OptionImageSource}" 
-                                                               Stretch="Uniform" Margin="5" MaxHeight="150"/>
+                                                               Stretch="Uniform" Margin="5" MaxHeight="350"/>
                                                         <TextBlock Text="{Binding ImageDescription}" Margin="8" 
                                                                    TextWrapping="Wrap" Foreground="#5f6368"
                                                                    Visibility="{Binding ImageDescription, Converter={StaticResource StringToVisibilityConverter}}"/>
