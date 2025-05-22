@@ -125,7 +125,7 @@
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Викторина с изображениями" 
+                                    <TextBlock Text="Викторина с картинками" 
                                                Style="{StaticResource TemplateLinkStyle}"
                                                MouseDown="Template_MouseDown"
                                                Tag="test_image_quiz"/>
@@ -193,7 +193,7 @@
                                 
                                 <StackPanel Style="{StaticResource TemplateItemStyle}">
                                     <Path Style="{StaticResource LinkIconStyle}"/>
-                                    <TextBlock Text="Выбор лучшей фотографии" 
+                                    <TextBlock Text="Выбор фотографии" 
                                                Style="{StaticResource TemplateLinkStyle}"
                                                MouseDown="Template_MouseDown"
                                                Tag="vote_best_photo"/>

@@ -188,6 +188,41 @@ namespace Project_Vote
             QuestionsItemsControl.ItemsSource = _questions;
         }
 
+        // Новый конструктор для открытия существующего опроса/теста
+        public Golos(int pollId)
+        {
+            InitializeComponent();
+            _editingPollId = pollId; // Устанавливаем ID редактируемого опроса/теста
+            _isEditingMode = true; // Включаем режим редактирования/просмотра
+
+            InitializeRichTextBox();
+            QuestionsItemsControl.ItemsSource = _questions; // Привязываем QuestionsItemsControl
+            OptionsListBox.ItemsSource = _pollOptions; // Привязываем OptionsListBox (для голосований)
+
+            LoadPollForEditing(pollId); // Загружаем данные опроса/теста
+
+            // Отключаем элементы управления редактированием, если это просмотр (не редактирование)
+            if (!_isEditingMode) // Возможно, потребуется другая логика для определения режима просмотра
+            {
+                DisableEditingControls(); // Метод для отключения элементов управления
+            }
+        }
+
+        private void DisableEditingControls()
+        {
+            // Пример отключения элементов управления
+            TitleTextBox.IsEnabled = false;
+            DescriptionRichTextBox.IsEnabled = false;
+            PollTypeComboBox.IsEnabled = false;
+            NoLimitCheckBox.IsEnabled = false;
+            AddOptionButton.Visibility = Visibility.Collapsed; // Скрыть кнопку добавления варианта
+            SaveButton.Visibility = Visibility.Collapsed; // Скрыть кнопку сохранения
+
+            // Дополнительно можно пройтись по QuestionsItemsControl и OptionsListBox
+            // и отключить/скрыть кнопки удаления/загрузки изображений
+            // Это может потребовать доступа к визуальным элементам через VisualTreeHelper
+        }
+
         private void InitializeRichTextBox()
         {
             Paragraph paragraph = new Paragraph();
@@ -1221,10 +1256,96 @@ namespace Project_Vote
                 case "Одиночный выбор (радиокнопки)":
                 case "Множественный выбор (флажки)":
                     pollData = _pollOptions;
-                    break;
+                    // Для этих типов опросов, используем стандартный предпросмотр (PollPreview)
+                    try
+                    {
+                        PollPreview previewWindow = new PollPreview(title, descriptionDoc, pollType, pollData);
+                        previewWindow.Owner = this;
+                        previewWindow.ShowDialog();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка при открытии предпросмотра: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    break; // Добавляем break
+
                 case "Тест с вопросами и вариантами ответов":
-                    pollData = _questions;
-                    break;
+                    // Проверяем наличие вопросов
+                    if (_questions == null || _questions.Count == 0)
+                    {
+                        MessageBox.Show("Необходимо добавить хотя бы один вопрос для предпросмотра теста.",
+                                        "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Для предпросмотра теста, сначала сохраняем временный тест в базу данных
+                    // Логика аналогична сохранению временного голосования
+                    try
+                    {
+                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+
+                            // Создаем таблицы если нужно
+                            if (!CreatePollTableIfNotExists(conn) || !CreateQuestionOptionImageColumnIfNotExists(conn))
+                            {
+                                return;
+                            }
+
+                            // Создаем временную запись теста
+                            int tempTestId = -1;
+
+                            string insertQuery = @"
+                                INSERT INTO polls 
+                                (user_id, title, description, poll_type, created_at, is_active, created_by, password, end_date) 
+                                VALUES 
+                                (@user_id, @title, @description, @poll_type, @created_at, @is_active, @created_by, @password, @end_date)";
+
+                            using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@user_id", CurrentUser.UserId);
+                                cmd.Parameters.AddWithValue("@title", title);
+                                cmd.Parameters.AddWithValue("@description", description);
+                                cmd.Parameters.AddWithValue("@poll_type", "Тест с вопросами и вариантами ответов");
+                                cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
+                                cmd.Parameters.AddWithValue("@is_active", true);
+                                cmd.Parameters.AddWithValue("@created_by", CurrentUser.Name);
+                                cmd.Parameters.AddWithValue("@password", !string.IsNullOrEmpty(PasswordBox.Password) ? PasswordBox.Password : (object)DBNull.Value);
+
+                                // Устанавливаем дату окончания
+                                if (NoLimitCheckBox.IsChecked == true)
+                                    cmd.Parameters.AddWithValue("@end_date", new DateTime(9999, 12, 31));
+                                else
+                                    cmd.Parameters.AddWithValue("@end_date", EndDatePicker.SelectedDate ?? DateTime.Now.AddDays(7));
+
+                                cmd.ExecuteNonQuery();
+                                tempTestId = (int)cmd.LastInsertedId;
+                            }
+
+                            // Сохраняем вопросы и варианты ответов для временного теста
+                            SaveQuestionsAndOptions(tempTestId, conn, null); // Используем существующий метод SaveQuestionsAndOptions
+
+                            // Открываем окно прохождения теста с созданным ID
+                            TestPassingWindow testWindow = new TestPassingWindow(tempTestId, title); // Предполагаем, что TestPassingWindow имеет такой конструктор
+                            testWindow.Owner = this;
+                            testWindow.ShowDialog();
+
+                            // После закрытия окна удаляем временную запись
+                            string deleteQuery = "DELETE FROM polls WHERE id = @id";
+                            using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@id", tempTestId);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка при создании временного теста для предпросмотра: {ex.Message}",
+                                       "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    break; // Добавляем break
+
                 case "Голосование":
                     // Проверяем наличие вариантов
                     if (_pollOptions == null || _pollOptions.Count == 0)
@@ -1346,17 +1467,18 @@ namespace Project_Vote
                     break;
             }
 
-            try
-            {
-                // Для других типов опросов используем стандартный предпросмотр
-                PollPreview previewWindow = new PollPreview(title, descriptionDoc, pollType, pollData);
-                previewWindow.Owner = this;
-                previewWindow.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при открытии предпросмотра: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            // Удаляем старый код, который открывал PollPreview для всех остальных типов
+            // try
+            // {
+            //     // Для других типов опросов используем стандартный предпросмотр
+            //     PollPreview previewWindow = new PollPreview(title, descriptionDoc, pollType, pollData);
+            //     previewWindow.Owner = this;
+            //     previewWindow.ShowDialog();
+            // }
+            // catch (Exception ex)
+            // {
+            //     MessageBox.Show($"Ошибка при открытии предпросмотра: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            // }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -2412,6 +2534,124 @@ namespace Project_Vote
                         break;
                     }
                 }
+            }
+        }
+
+        // Метод для загрузки опций (кандидатов) для голосования
+        private void LoadOptionsForVoting(int pollId, MySqlConnection conn)
+        {
+            _pollOptions.Clear(); // Очищаем текущие опции
+            try
+            {
+                string optionsQuery = "SELECT options FROM polls WHERE id = @pollId";
+                using (MySqlCommand cmd = new MySqlCommand(optionsQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@pollId", pollId);
+
+                    string optionsString = (string)cmd.ExecuteScalar();
+                    if (!string.IsNullOrEmpty(optionsString))
+                    {
+                        string[] options = optionsString.Split(new[] { "|||" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string optionText in options)
+                        {
+                            // Создаем PollOption и добавляем в коллекцию
+                            PollOption option = new PollOption { Text = optionText };
+                            _pollOptions.Add(option);
+                        }
+                    }
+                }
+
+                // Загружаем изображения для опций голосования (кандидатов), если метод LoadCandidateImages подходит
+                // Проверим, существует ли метод LoadCandidateImages в этом классе
+                // Если LoadCandidateImages в Golos.xaml.cs предназначен для изображений кандидатов голосования,
+                // вызываем его здесь.
+                // LoadCandidateImages(pollId, conn); // Вызов, если метод существует и подходит
+
+                // Если метод LoadCandidateImages отсутствует или предназначен для другого,
+                // возможно, потребуется скопировать или адаптировать логику загрузки изображений
+                // из TestGolosovania.xaml.cs в этот метод или создать новый.
+
+                // Временно закомментируем вызов LoadCandidateImages, пока не убедимся, что он подходит.
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке опций голосования: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public void LoadTemplateData(int templatePollId)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Загружаем основные данные опроса
+                    string query = @"SELECT title, description, poll_type, end_date
+                                   FROM polls WHERE id = @pollId";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pollId", templatePollId);
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                // Заполняем основные поля
+                                TitleTextBox.Text = reader["title"].ToString();
+                                
+                                // Заполняем описание
+                                FlowDocument doc = new FlowDocument();
+                                Paragraph paragraph = new Paragraph();
+                                paragraph.Inlines.Add(new Run(reader["description"].ToString()));
+                                doc.Blocks.Add(paragraph);
+                                DescriptionRichTextBox.Document = doc;
+
+                                // Устанавливаем тип опроса
+                                string pollType = reader["poll_type"].ToString();
+                                PollTypeComboBox.SelectedItem = PollTypeComboBox.Items
+                                    .Cast<ComboBoxItem>()
+                                    .FirstOrDefault(item => item.Content.ToString() == pollType);
+
+                                // Устанавливаем дату окончания и флаг без ограничений
+                                if (reader["end_date"] != DBNull.Value)
+                                {
+                                    DateTime endDate = Convert.ToDateTime(reader["end_date"]);
+                                    if (endDate.Year >= 9000)
+                                    {
+                                        NoLimitCheckBox.IsChecked = true;
+                                    }
+                                    else
+                                    {
+                                        NoLimitCheckBox.IsChecked = false;
+                                        EndDatePicker.SelectedDate = endDate;
+                                    }
+                                } else {
+                                   NoLimitCheckBox.IsChecked = false;
+                                   EndDatePicker.SelectedDate = DateTime.Now.AddDays(7);
+                                }
+                            }
+                        }
+                    }
+
+                    // Загружаем вопросы и варианты ответов
+                    LoadQuestionsWithImages(templatePollId, conn);
+
+                    // Если это голосование, загружаем варианты ответов
+                    if (PollTypeComboBox.SelectedItem != null && 
+                        ((ComboBoxItem)PollTypeComboBox.SelectedItem).Content.ToString() == "Голосование")
+                    {
+                        LoadOptionsForVoting(templatePollId, conn);
+                        // Загружаем изображения для опций голосования (кандидатов)
+                        LoadCandidateImages(templatePollId, conn);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке данных шаблона: {ex.Message}",
+                              "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

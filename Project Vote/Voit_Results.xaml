@@ -54,11 +54,9 @@
                     <DataGridTextColumn Header="Процент" Binding="{Binding Percentage, StringFormat={}{0:N2}%}" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
-
-            <!-- Круговая диаграмма -->
             <Border Grid.Column="1" Background="White" BorderBrush="#ddd" BorderThickness="1" 
                     CornerRadius="5" Padding="15">
-    <Grid>
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -71,10 +69,7 @@
 
                     <Canvas Grid.Row="1" x:Name="ChartCanvas" Background="Transparent"
                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <!-- Диаграмма будет построена программно -->
                     </Canvas>
-                    
-                    <!-- Легенда -->
                     <ItemsControl Grid.Row="2" x:Name="ChartLegend" Margin="0,15,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -89,8 +84,6 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- Кнопки внизу -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button x:Name="ExportButton" Content="Экспорт" 
                     Padding="20,10" Margin="0,0,10,0" Click="ExportButton_Click"

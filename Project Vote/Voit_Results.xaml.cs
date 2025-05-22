@@ -153,8 +153,8 @@ namespace Project_Vote
 
         private void UpdateUI()
         {
-            this.Title = $"Результаты голосования - {_pollTitle}";
-            TitleText.Text = $"Результаты голосования";
+           this.Title = $"Результаты голосования - {_pollTitle}";
+           TitleText.Text = $"Результаты голосования";
             PollNameText.Text = _pollTitle;
             DateTimeText.Text = _pollDate.ToString("dd.MM.yyyy HH:mm:ss");
 
@@ -176,16 +176,12 @@ namespace Project_Vote
         {
             int lastDigit = count % 10;
             int lastTwoDigits = count % 100;
-
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
                 return "человек";
-
             if (lastDigit == 1)
                 return "человек";
-
             if (lastDigit >= 2 && lastDigit <= 4)
                 return "человека";
-
             return "человек";
         }
 
@@ -206,15 +202,12 @@ namespace Project_Vote
                 figure.StartPoint = center;
                 double endAngle = startAngle + sweepAngle;
                 bool isLargeArc = sweepAngle > 180;
-
                 Point arcStart = new Point(
                     center.X + radius * Math.Cos(startAngle * Math.PI / 180),
                     center.Y + radius * Math.Sin(startAngle * Math.PI / 180));
-
                 Point arcEnd = new Point(
                     center.X + radius * Math.Cos(endAngle * Math.PI / 180),
                     center.Y + radius * Math.Sin(endAngle * Math.PI / 180));
-
                 figure.Segments.Add(new LineSegment(arcStart, true));
                 figure.Segments.Add(new ArcSegment(
                     arcEnd,
@@ -226,7 +219,6 @@ namespace Project_Vote
                 figure.Segments.Add(new LineSegment(center, true));
                 PathGeometry geometry = new PathGeometry();
                 geometry.Figures.Add(figure);
-
                 System.Windows.Shapes.Path path = new System.Windows.Shapes.Path();
                 path.Data = geometry;
                 path.Fill = result.Color;
@@ -277,6 +269,7 @@ namespace Project_Vote
                 }
             }
         }
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();

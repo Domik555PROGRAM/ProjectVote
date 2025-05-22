@@ -32,7 +32,6 @@ namespace Project_Vote
             _currentSearchQuery = searchQuery;
             Title = $"Результаты поиска: {searchQuery}";
             SearchBox.Text = searchQuery;
-
             searchResults = new List<SearchItem>();
             SearchItems();
         }
@@ -43,8 +42,6 @@ namespace Project_Vote
             {
                 _currentSearchQuery = searchQuery;
                 Title = $"Результаты поиска: {searchQuery}";
-
-                // Выполняем поиск с обновленным запросом
                 searchResults = new List<SearchItem>();
                 SearchItems();
             }
@@ -59,14 +56,9 @@ namespace Project_Vote
                                 "Пустой запрос", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
             _currentSearchQuery = searchQuery;
             Title = $"Результаты поиска: {searchQuery}";
-
-            // Выполняем поиск с текущими параметрами
             searchResults = new List<SearchItem>();
-
-            // Остальной код перенесен в отдельный метод SearchItems
             SearchItems();
         }
 
@@ -77,8 +69,6 @@ namespace Project_Vote
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    // Определяем условие для типа элемента в зависимости от выбранной категории
                     string typeCondition = "";
                     if (_currentCategory == "Тесты")
                     {
@@ -102,7 +92,6 @@ namespace Project_Vote
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@searchQuery", $"%{_currentSearchQuery}%");
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -110,7 +99,6 @@ namespace Project_Vote
                                 string pollType = reader.GetString("poll_type");
                                 string displayType = pollType == "Тест с вопросами и вариантами ответов" ? "Тест" : pollType;
                                 string actionText = pollType == "Тест с вопросами и вариантами ответов" ? "Пройти тест" : "Голосовать";
-
                                 searchResults.Add(new SearchItem
                                 {
                                     Id = reader.GetInt32("id"),
@@ -129,7 +117,6 @@ namespace Project_Vote
                         }
                     }
                 }
-
                 if (searchResults.Count > 0)
                 {
                     ItemsListView.ItemsSource = searchResults;
@@ -147,20 +134,15 @@ namespace Project_Vote
                                 "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         private void StartItem_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
             if (button == null || button.Tag == null)
                 return;
-
             int itemId = Convert.ToInt32(button.Tag);
             var selectedItem = searchResults.Find(t => t.Id == itemId);
-
             if (selectedItem == null)
                 return;
-
-            // Проверяем дату окончания 
             try
             {
                 DateTime endDate = DateTime.MaxValue;
@@ -181,8 +163,6 @@ namespace Project_Vote
                         }
                     }
                 }
-
-                // Проверяем, активен ли по дате окончания
                 if (!IsPollActive(endDate))
                 {
                     string itemType = selectedItem.Type == "Тест" ? "теста" : "голосования";
@@ -202,13 +182,9 @@ namespace Project_Vote
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
-            // Проверяем пароль, если защищен
             if (selectedItem.HasPassword)
             {
                 string password = GetItemPassword(itemId);
-
-                // Показываем диалог для ввода пароля
                 var passwordWindow = new PasswordPromptWindow(selectedItem.Title, false);
                 if (passwordWindow.ShowDialog() == true)
                 {
@@ -224,27 +200,22 @@ namespace Project_Vote
                 }
                 else
                 {
-                    return; // Пользователь отменил ввод пароля
+                    return; 
                 }
             }
-
-            // Открываем соответствующее окно в зависимости от типа
             if (selectedItem.Type == "Тест")
             {
-                // Открываем окно прохождения теста
                 var testWindow = new TestPassingWindow(itemId, selectedItem.Title);
                 testWindow.Owner = this;
                 testWindow.ShowDialog();
             }
             else if (selectedItem.Type == "Голосование")
             {
-                // Открываем окно голосования
                 var votingWindow = new TestGolosovania(itemId, selectedItem.Title);
                 votingWindow.Owner = this;
                 votingWindow.ShowDialog();
             }
         }
-
         private string GetItemPassword(int itemId)
         {
             try

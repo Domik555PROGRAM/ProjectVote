@@ -8,12 +8,10 @@
         Title="Голосование" Height="700" Width="900" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-
         <LinearGradientBrush x:Key="ButtonGradientBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#4A90E2" Offset="0.0"/>
             <GradientStop Color="#357ABD" Offset="1.0"/>
         </LinearGradientBrush>
-
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource ButtonGradientBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -44,7 +42,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Key="CandidateCardStyle" TargetType="Border">
             <Setter Property="BorderBrush" Value="#CCCCCC"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -61,15 +58,12 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <!-- Заголовок и информация о голосовании -->
         <StackPanel Grid.Row="0" Margin="20,20,20,10">
             <TextBlock x:Name="TitleTextBlock" FontSize="24" FontWeight="Bold" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10"/>
             <TextBlock x:Name="DescriptionTextBlock" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,15"/>
@@ -118,23 +112,16 @@
                 <StackPanel>
                     <TextBlock x:Name="ResultTitleTextBlock" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
                     <TextBlock x:Name="ResultMessageTextBlock" Margin="0,0,0,20" TextWrapping="Wrap"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="Посмотреть результаты" Click="ShowResultsButton_Click" 
-                                Margin="0,0,10,0" Background="#4CAF50" Foreground="White">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="4"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                        <Button Content="Закрыть" Click="CloseResult_Click" HorizontalAlignment="Center">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="4"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Посмотреть результаты" Click="ShowResultsButton_Click" 
+                                Margin="0,0,10,0" Style="{StaticResource {x:Type Button}}"/>
+                        <Button Grid.Column="1" Content="Закрыть" Click="CloseResult_Click" 
+                                Margin="10,0,0,0" Style="{StaticResource {x:Type Button}}"/>
+                    </Grid>
                 </StackPanel>
             </Border>
         </Border>

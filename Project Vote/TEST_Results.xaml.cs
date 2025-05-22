@@ -311,28 +311,22 @@ namespace Project_Vote
         {
             try
             {
-                // Заполняем основную информацию о результате
                 DetailUserName.Text = result.UserName;
                 DetailDateTime.Text = $"Пройден: {result.DateTime:dd.MM.yyyy HH:mm:ss}";
                 DetailScore.Text = $"Результат: {result.Score} ({result.ScorePercent:0.##}%)";
 
-                // Форматируем время прохождения
                 TimeSpan duration = TimeSpan.FromSeconds(result.DurationSeconds);
                 string durationStr = duration.TotalHours >= 1
                     ? $"{(int)duration.TotalHours}ч {duration.Minutes}м {duration.Seconds}с"
                     : duration.Minutes > 0
                         ? $"{duration.Minutes}м {duration.Seconds}с"
                         : $"{duration.Seconds}с";
-                DetailTimeSpent.Text = $"Время прохождения: {durationStr}";
 
-                // Отображаем процент в круговой диаграмме
                 PercentText.Text = $"{result.ScorePercent:0}%";
                 DrawResultPie(result.ScorePercent);
 
-                // Загружаем детали ответов
                 LoadAnswerDetails(result.Id);
 
-                // Показываем панель с деталями
                 ResultDetailsPanel.Visibility = Visibility.Visible;
                 NoSelectionText.Visibility = Visibility.Collapsed;
             }

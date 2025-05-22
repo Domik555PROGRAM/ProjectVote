@@ -486,7 +486,7 @@
                                         <TextBlock Grid.Row="1" Text="Выберите готовый шаблон опроса или теста из нашей коллекции. Сэкономьте время при создании опросов." 
                                                   TextWrapping="Wrap" Margin="0,15" FontSize="15" Foreground="#555"/>
                                         <Button Grid.Row="2" Content="Выбрать шаблон" 
-                                               HorizontalAlignment="Left" Click="OpenTemplatesWindow_Click"
+                                               HorizontalAlignment="Left" Click="TemplatesButton_Click"
                                                Style="{StaticResource GradientButtonStyle}"/>
                                     </Grid>
                                 </Border>

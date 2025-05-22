@@ -811,11 +811,20 @@ namespace Project_Vote
 
         private void TemplatesButton_Click(object sender, RoutedEventArgs e)
         {
-            Templatesxaml templatesWindow = new Templatesxaml();
-            templatesWindow.Owner = this;
-            templatesWindow.ShowDialog();
+            if (!CurrentUser.IsLoggedIn)
+            {
+                ShowNotification("Для доступа к шаблонам необходимо войти в систему", NotificationType.Warning);
+                Vhod loginWindow = new Vhod();
+                if (loginWindow.ShowDialog() == true)
+                {
+                    UpdateUserInfo();
+                    OpenTemplatesWindow();
+                }
+                return;
+            }
+            OpenTemplatesWindow();
         }
-        private void OpenTemplatesWindow_Click(object sender, RoutedEventArgs e)
+        private void OpenTemplatesWindow()
         {
             if (_openWindows.TryGetValue(typeof(Templatesxaml), out Window existingWindow))
             {
@@ -1065,7 +1074,6 @@ namespace Project_Vote
         {
             try
             {
-                // Создаем и открываем окно голосования
                 VotingWindow votingWindow = new VotingWindow();
                 votingWindow.TitleTextBlock.Text = title;
 
@@ -1087,8 +1095,6 @@ namespace Project_Vote
                 Voit_Results resultsWindow = new Voit_Results(pollId);
                 resultsWindow.Owner = this;
                 resultsWindow.Show();
-
-                ShowNotification($"Результаты голосования: {title}", NotificationType.Info);
             }
             catch (Exception ex)
             {

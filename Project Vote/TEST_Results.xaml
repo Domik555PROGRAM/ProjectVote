@@ -143,7 +143,6 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Имя пользователя" Binding="{Binding UserName}" Width="*"/>
                                 <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat=dd.MM.yyyy}" Width="100"/>
-                                <DataGridTextColumn Header="Время" Binding="{Binding Time, StringFormat=HH:mm:ss}" Width="80"/>
                                 <DataGridTextColumn Header="Баллы" Binding="{Binding Score}" Width="80"/>
                                 <DataGridTextColumn Header="Процент" Binding="{Binding ScorePercent, StringFormat={}{0}%}" Width="80"/>
                             </DataGrid.Columns>
