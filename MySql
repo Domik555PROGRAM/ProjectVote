@@ -1,0 +1,215 @@
+DROP TABLE IF EXISTS notifications;
+CREATE TABLE IF NOT EXISTS `polls` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NULL DEFAULT NULL,  
+  `title` VARCHAR(255) NOT NULL UNIQUE,
+  `description` TEXT NULL,
+  `poll_type` VARCHAR(100) NULL,
+  `created_at` DATETIME NULL,
+  `is_active` BOOLEAN NULL DEFAULT TRUE,
+  `created_by` VARCHAR(100) NULL, 
+  `options` TEXT NULL,            
+  `password` VARCHAR(255) NULL,   
+  PRIMARY KEY (`id`),
+  INDEX `idx_user_id` (`user_id` ASC)
+);
+
+CREATE TABLE IF NOT EXISTS `questions` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,          
+  `question_text` TEXT NULL,      
+  `question_order` INT NULL DEFAULT 0,
+  `question_image` LONGBLOB NULL, 
+  `image_description` TEXT NULL,  
+  PRIMARY KEY (`id`),
+  INDEX `fk_questions_polls_idx` (`poll_id` ASC) VISIBLE, 
+  CONSTRAINT `fk_questions_polls`        
+    FOREIGN KEY (`poll_id`)
+    REFERENCES `vopros`.`polls` (`id`) 
+    ON DELETE CASCADE                
+    ON UPDATE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS `vote_results` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `candidate_name` VARCHAR(255) NOT NULL,
+  `vote_date` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_poll_id` (`poll_id` ASC),
+  INDEX `idx_user_id` (`user_id` ASC)
+);
+
+CREATE TABLE IF NOT EXISTS `question_options` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `question_id` INT NOT NULL,     
+  `option_text` TEXT NULL,         
+  `is_correct` BOOLEAN NULL DEFAULT FALSE, 
+  `option_order` INT NULL DEFAULT 0,  
+  `option_image` LONGBLOB NULL,    
+  `image_description` TEXT NULL,   
+  PRIMARY KEY (`id`),
+  INDEX `fk_question_options_questions_idx` (`question_id` ASC) VISIBLE, 
+  CONSTRAINT `fk_question_options_questions` 
+    FOREIGN KEY (`question_id`)
+    REFERENCES `vopros`.`questions` (`id`) 
+    ON DELETE CASCADE               
+    ON UPDATE NO ACTION
+);
+
+DROP TABLE IF EXISTS test_user_answers;
+   DROP TABLE IF EXISTS test_results;
+   
+   CREATE TABLE IF NOT EXISTS `test_results` (
+     `id` INT NOT NULL AUTO_INCREMENT,
+     `poll_id` INT NOT NULL,
+     `user_id` INT NULL,
+     `created_at` DATETIME NOT NULL,  
+     `correct_answers` INT NOT NULL,
+     `total_questions` INT NOT NULL,
+     `percentage_correct` DECIMAL(5,2) NOT NULL,
+     `duration_seconds` INT NOT NULL DEFAULT 0,
+     PRIMARY KEY (`id`),
+     INDEX `fk_test_results_polls_idx` (`poll_id` ASC) VISIBLE,
+     CONSTRAINT `fk_test_results_polls`
+       FOREIGN KEY (`poll_id`)
+       REFERENCES `vopros`.`polls` (`id`)
+       ON DELETE CASCADE
+       ON UPDATE NO ACTION
+   );
+
+
+CREATE TABLE IF NOT EXISTS `test_user_answers` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,                
+  `user_id` INT NULL,                      
+  `question_id` INT NOT NULL,            
+  `option_id` INT NULL,                     
+  `is_correct` BOOLEAN NOT NULL DEFAULT FALSE, 
+  `answer_time` DATETIME NOT NULL,          
+  PRIMARY KEY (`id`),
+  INDEX `fk_test_user_answers_polls_idx` (`poll_id` ASC) VISIBLE,
+  INDEX `fk_test_user_answers_questions_idx` (`question_id` ASC) VISIBLE,
+  INDEX `fk_test_user_answers_options_idx` (`option_id` ASC) VISIBLE,
+  CONSTRAINT `fk_test_user_answers_polls`
+    FOREIGN KEY (`poll_id`)
+    REFERENCES `vopros`.`polls` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_test_user_answers_questions`
+    FOREIGN KEY (`question_id`)
+    REFERENCES `vopros`.`questions` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_test_user_answers_options`
+    FOREIGN KEY (`option_id`)
+    REFERENCES `vopros`.`question_options` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS `voting_votes` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,          
+  `user_id` INT NULL,              
+  `option_id` INT NOT NULL,       
+  `vote_time` DATETIME NOT NULL,  
+  `ip_address` VARCHAR(45) NULL,   
+  PRIMARY KEY (`id`),
+  INDEX `fk_voting_votes_polls_idx` (`poll_id` ASC) VISIBLE,
+  CONSTRAINT `fk_voting_votes_polls`
+    FOREIGN KEY (`poll_id`)
+    REFERENCES `vopros`.`polls` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+);
+
+
+CREATE TABLE IF NOT EXISTS `voting_candidates` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,          
+  `name` VARCHAR(255) NOT NULL,    
+  `description` TEXT NULL,        
+  `candidate_order` INT NULL DEFAULT 0,
+  `image_id` INT NULL,             
+  PRIMARY KEY (`id`),
+  INDEX `fk_voting_candidates_polls_idx` (`poll_id` ASC) VISIBLE,
+  INDEX `fk_voting_candidates_images_idx` (`image_id` ASC) VISIBLE,
+  CONSTRAINT `fk_voting_candidates_polls`
+    FOREIGN KEY (`poll_id`)
+    REFERENCES `vopros`.`polls` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_voting_candidates_images`
+    FOREIGN KEY (`image_id`)
+    REFERENCES `vopros`.`poll_option_images` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION
+);
+
+-- Таблица для хранения итогов голосования
+CREATE TABLE IF NOT EXISTS `voting_results` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,        
+  `candidate_id` INT NOT NULL,     
+  `votes_count` INT NOT NULL DEFAULT 0, 
+  `percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `result_calculated_at` DATETIME NOT NULL, 
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_poll_candidate` (`poll_id` ASC, `candidate_id` ASC) VISIBLE, 
+  INDEX `fk_voting_results_polls_idx` (`poll_id` ASC) VISIBLE,
+  INDEX `fk_voting_results_candidates_idx` (`candidate_id` ASC) VISIBLE,
+  CONSTRAINT `fk_voting_results_polls`
+    FOREIGN KEY (`poll_id`)
+    REFERENCES `vopros`.`polls` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_voting_results_candidates`
+    FOREIGN KEY (`candidate_id`)
+    REFERENCES `vopros`.`voting_candidates` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS `candidate_images` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `poll_id` INT NOT NULL,
+  `candidate_name` VARCHAR(255) NOT NULL,
+  `image_data` LONGBLOB NULL,
+  `description` TEXT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_poll_id` (`poll_id` ASC)
+);
+
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_name VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    poll_id INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (poll_id) REFERENCES polls(id)
+);
+
+
+
+
+
+
+
+
+
+SELECT id, title, end_date FROM polls WHERE end_date IS NOT NULL;
+
+
+-- Просмотр всех опросов
+SELECT * FROM polls;
+
+
+SELECT * FROM candidate_images;
+
+-- Просмотр всех вопросов
+SELECT * FROM questions;
+
+-- Просмотр всех вариантов ответа
+SELECT * FROM question_options;
