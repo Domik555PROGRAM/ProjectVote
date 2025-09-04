@@ -30,8 +30,8 @@ git clone https://github.com/your-username/repository-name.git
 cd repository-name
 
 # 2. Set up your database connection
-#    Edit the config/database.json file with your database credentials
-#    Or set environment variables in .env file
+   Edit the config/database.json file with your database credentials
+   Or set environment variables in .env file
 
 # 3. Install dependencies and start the application
 npm install
@@ -72,6 +72,7 @@ npm start
 
 ### Create a poll
 ![Create a poll](create-vote.png)
+
 *Form for creating a new vote*
 
 ### Results
