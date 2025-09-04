@@ -30,8 +30,6 @@
 # 2. Set up a database connection using MySQL code
 
 # 3. Install dependencies and start the application
-npm install
-npm start
 
 ## Usage
 
